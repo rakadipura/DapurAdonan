@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  imageUrl  String?
+  sortOrder Int       @default(0)
+  isVisible Boolean   @default(true)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  slug        String        @unique
+  description String        @db.Text
+  price       Int           // in rupiah, stored as integer
+  imageUrl    String?
+  isAvailable Boolean       @default(true)
+  dailyStock  Int?          // null = unlimited
+  categoryId  Int
+  category    Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model BookingSlot {
+  id        Int       @id @default(autoincrement())
+  name      String
+  startTime String    // "HH:mm" in WIB, e.g. "09:00"
+  endTime   String    // "HH:mm" in WIB, e.g. "11:00"
+  capacity  Int       @default(4)
+  isActive  Boolean   @default(true)
+  order     Int       @default(0)
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+}
+
+model Booking {
+  id         Int       @id @default(autoincrement())
+  code       String    @unique @default(cuid())
+  date       DateTime  @db.Date // booking date (WIB)
+  slotId     Int
+  slot       BookingSlot @relation(fields: [slotId], references: [id])
+  partySize  Int       // 1..maxPartySize
+  name       String
+  phone     String
+  status     String   @default("PENDING")
+  createdAt  DateTime
+  updatedAt  DateTime  @updatedAt
+  noShowAt   DateTime?
+
+  @@index([date, slotId])
+  @@index([phone])
+}
+
+
+model Order {
+  id              Int          @id @default(autoincrement())
+  code            String       @unique @default(cuid())
+  status          String         @default("PENDING")
+  type            String         @default("PICKUP")
+
+  customerName    String
+  customerPhone   String
+  customerEmail   String?        // optional
+
+  // pickup
+  pickupDate      DateTime?      @db.Date
+  pickupWindow    String?        // e.g. "17:00-18:00"
+
+  // delivery
+  deliveryAddress String?
+  deliveryZone    String?        // zone key matching Setting
+  deliveryFee     Int            @default(0)
+
+  notes           String?        @db.Text
+
+  // payment
+  paymentMethod   String         @default("CASH")
+  isPaid          Boolean        @default(false) // admin confirms
+  paymentProofUrl String?        // stored in DB / external storage ref
+
+  total           Int
+  createdAt       DateTime
+  updatedAt       DateTime      @updatedAt
+  completedAt     DateTime?
+
+  itemsOrder      OrderItem[]
+
+  @@index([pickupDate])
+  @@index([status])
+  @@index([customerPhone])
+}
+
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  qty       Int
+  notes     String?  @db.Text
+  price     Int      // snapshot of product price at order time in rupiah
+}
+
+model Setting {
+  id       Int      @id @default(autoincrement())
+  key      String   @unique
+  value    String
+  updatedAt DateTime @updatedAt
+}
+
+model OrderCode {
+  id Int @id @default(autoincrement())
+}

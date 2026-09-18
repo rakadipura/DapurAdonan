@@ -1,0 +1,78 @@
+import type { Metadata } from "next";
+import { prisma } from "@/lib/db";
+import { getAvailableSlots, getBookingDateOptions } from "@/lib/bookings";
+import { getMaxPartySize, getBookingLeadHours, formatDateYMD, formatDateLong } from "@/lib/settings";
+import { SessionProvider } from "@/components/customer/SessionProvider";
+import { BookingFlow } from "@/components/customer/booking/BookingFlow";
+
+export const metadata: Metadata = {
+  title: "Booking Meja — Toko Mini Moni",
+  description: "R(book a table diners for Toko Mini Moni. Choose a date, time slot, and party size.",
+};
+
+export default async function BookingPage() {
+  const [categories, products, slots, dateOptions, maxPartySize, leadHours] = await Promise.all([
+    prisma.category.findMany({
+      where: { isVisible: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.product.findMany({
+      where: { isAvailable: true },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        price: true,
+        imageUrl: true,
+        dailyStock: true,
+        isAvailable: true,
+        category: { select: { name: true } },
+      },
+    }),
+    prisma.bookingSlot.findMany({
+      where: { isActive: true },
+      orderBy: { order: "asc" },
+      select: { id: true, name: true, startTime: true, endTime: true, capacity: true },
+    }),
+    getBookingDateOptions(14),
+    getMaxPartySize(),
+    getBookingLeadHours(),
+  ]);
+
+  // Pick tomorrow's date as the example / default for the form placeholder.
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const defaultDate = formatDateYMD(tomorrow);
+
+  return (
+    <SessionProvider>
+      <div className="min-h-screen bg-[#fffaf0] px-4 py-12 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-3xl">
+          {/* Header */}
+          <header className="mb-8">
+            <a href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
+              ← Kembali ke Toko Mini Moni
+            </a>
+            <h1 className="mt-4 text-3xl font-bold text-[#6b4a2b]">Booking Meja</h1>
+            <p className="mt-2 text-base text-[#5a4a3a]">
+              Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni.
+              Hanya tersedia hingga 8 orang per meja.
+            </p>
+          </header>
+
+          <BookingFlow
+            categories={categories}
+            products={products}
+            slots={slots}
+            dateOptions={dateOptions}
+            maxPartySize={maxPartySize}
+            leadHours={leadHours}
+            defaultDate={defaultDate}
+          />
+        </div>
+      </div>
+    </SessionProvider>
+  );
+}
