@@ -6,6 +6,12 @@
 - Local:         http://localhost:3001
 - Network:       http://192.168.18.216:3001
 - Environments: .env.local
-✓ Ready in 413ms
-✓ Running next.config.ts took 17ms
+✓ Ready in 535ms
+✓ Running next.config.ts took 26ms
 
+ GET /order/status?code=AZKFAS9F&phone=081234567890 200 in 587ms (next.js: 312ms, application-code: 275ms)
+ POST /api/orders 201 in 262ms (next.js: 194ms, application-code: 68ms)
+ GET /order/success?code=E68VFL45&phone=081234567891 200 in 173ms (next.js: 83ms, application-code: 90ms)
+ GET /order/success?code=UNGB6LUA&phone=081802003456 200 in 426ms (next.js: 78ms, application-code: 348ms)
+ GET / 200 in 1383ms (next.js: 602ms, application-code: 780ms)
+ GET /booking 200 in 915ms (next.js: 656ms, application-code: 259ms)

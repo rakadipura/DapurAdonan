@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db";
 import { getCustomerFacingSettings } from "@/lib/settings";
 import { SessionProvider } from "@/components/customer/SessionProvider";
 import { OrderForm } from "@/components/customer/order/OrderForm";
-import { formatRupiah } from "@/lib/money";
+import { ProductCard } from "@/components/customer/order/ProductCard";
+import type { Product, ProductVariant, AddOn } from "@/types";
 
 export const metadata: Metadata = {
   title: "Toko Mini Moni — Roti, Kue, dan Jajanan Sehat",
@@ -25,11 +26,17 @@ export default async function MenuPage() {
         name: true,
         slug: true,
         description: true,
-        price: true,
+        basePrice: true,
         imageUrl: true,
         dailyStock: true,
         isAvailable: true,
+        leadTimeDays: true,
+        isCustomCake: true,
+        allergens: true,
+        tags: true,
         category: { select: { name: true, slug: true } },
+        variants: { select: { id: true, name: true, priceDiff: true, isDefault: true, sortOrder: true }, orderBy: { sortOrder: "asc" } },
+        addOns: { select: { id: true, name: true, price: true, isRequired: true, sortOrder: true }, orderBy: { sortOrder: "asc" } },
       },
     }),
     getCustomerFacingSettings(),
@@ -113,7 +120,7 @@ export default async function MenuPage() {
             </a>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product) => (
+            {featuredProducts.map((product: Product & { variants?: ProductVariant[]; addOns?: AddOn[] }) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -136,7 +143,7 @@ export default async function MenuPage() {
             >
               Semua
             </a>
-            {categories.map((cat) => (
+            {categories.map((cat: { id: number; name: string; slug: string }) => (
               <a
                 key={cat.id}
                 href={`/menu?category=${cat.slug}`}
@@ -153,7 +160,7 @@ export default async function MenuPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((product) => (
+              {products.map((product: Product & { variants?: ProductVariant[]; addOns?: AddOn[] }) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
@@ -167,7 +174,7 @@ export default async function MenuPage() {
               products={products}
               categories={categories}
               settings={settings}
-              featuredOrders={todayOrders.map((o) => ({
+              featuredOrders={todayOrders.map((o: { code: string; customerName: string; total: number; status: string }) => ({
                 code: o.code,
                 customerName: o.customerName,
                 total: o.total,
@@ -195,82 +202,6 @@ export default async function MenuPage() {
           </div>
         </footer>
       </div>
-    </SessionProvider>
-  );
-}
-
-function ProductCard({
-  product,
-}: {
-  product: {
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    price: number;
-    imageUrl: string | null;
-    dailyStock: number | null;
-    isAvailable: boolean;
-    category: { name: string; slug: string };
-  };
-}) {
-  const stockLabel =
-    product.dailyStock == null
-      ? null
-      : product.dailyStock === 0
-        ? "Habis"
-        : `${product.dailyStock} tersisa`;
-
-  return (
-    <div className="group rounded-xl border border-[#efe2c7] bg-white p-4 shadow-sm transition hover:border-[#A0522D] hover:shadow-md">
-      <div className="aspect-square overflow-hidden rounded-lg bg-[#FCE9C8]">
-        {product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="h-full w-full object-cover transition group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-4xl text-[#e6c98a]">🍰</div>
-        )}
-      </div>
-      <div className="mt-3">
-        <p className="text-xs text-[#A0522D] uppercase tracking-wider">
-          {product.category.name}
-        </p>
-        <h3 className="mt-0.5 text-base font-semibold text-[#6b4a2b]">
-          {product.name}
-        </h3>
-        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-[#5a4a3a]">
-          {product.description}
-        </p>
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-lg font-bold text-[#6b4a2b]">
-            {formatRupiah(product.price)}
-          </span>
-          {stockLabel && (
-            <span
-              className={`text-xs font-medium ${
-                product.dailyStock === 0
-                  ? "text-red-600"
-                  : "text-[#A0522D]"
-              }`}
-            >
-              {stockLabel}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          className="mt-3 w-full rounded-lg border-0 bg-[#A0522D] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8b4513] active:scale-[0.98]"
-          onClick={() => {
-            // Handled by the OrderForm cart via window dispatch; the card itself
-            // is static, so the client component handles clicks.
-          }}
-        >
-          Tambah ke Keranjang
-        </button>
-      </div>
-    </div>
+</SessionProvider>
   );
 }

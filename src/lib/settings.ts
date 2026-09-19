@@ -145,17 +145,24 @@ export function fromWIBString(isoDate: string): Date {
   return new Date(isoDate + "T00:00:00+07:00");
 }
 
+export async function getWhatsAppNumber(): Promise<string> {
+  const raw = await getRaw("waNumber");
+  return raw || "6281234567890";
+}
+
 export async function getCustomerFacingSettings(): Promise<{
   pickupWindows: PickupWindow[];
   deliveryZones: DeliveryZone[];
   maxPartySize: number;
   transferInfo: string | null;
+  waNumber: string;
 }> {
-  const [windows, zones, maxPartySize, transferInfo] = await Promise.all([
+  const [windows, zones, maxPartySize, transferInfo, waNumber] = await Promise.all([
     getPickupWindows(),
     getDeliveryZones(),
     getMaxPartySize(),
     getTransferInfo(),
+    getWhatsAppNumber(),
   ]);
-  return { pickupWindows: windows, deliveryZones: zones, maxPartySize, transferInfo };
+  return { pickupWindows: windows, deliveryZones: zones, maxPartySize, transferInfo, waNumber };
 }

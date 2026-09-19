@@ -5,8 +5,10 @@ export const createOrderSchema = z.object({
     .array(
       z.object({
         productId: z.number().int().positive(),
+        variantId: z.number().int().positive().optional(),
         qty: z.number().int().min(1).max(99),
         notes: z.string().optional(),
+        selectedAddOns: z.array(z.string()).optional(),
       }),
     )
     .min(1, "Pilih minimal satu produk"),
@@ -22,7 +24,7 @@ export const createOrderSchema = z.object({
     .email("Format email tidak valid")
     .optional()
     .or(z.literal("")),
-  paymentMethod: z.enum(["TRANSFER", "EWALLET", "CASH"]),
+  paymentMethod: z.enum(["TRANSFER", "EWALLET", "CASH", "QRIS"]),
   notes: z.string().optional(),
   pickupDate: z
     .string()
@@ -35,6 +37,10 @@ export const createOrderSchema = z.object({
   deliveryAddress: z.string().trim().optional(),
   deliveryZone: z.string().optional(),
   paymentProofUrl: z.string().optional(),
+  isCustomCake: z.boolean().optional(),
+  customText: z.string().optional(),
+  customDesign: z.string().optional(),
+  customPhotoUrl: z.string().optional(),
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;

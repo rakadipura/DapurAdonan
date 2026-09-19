@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 export default async function OrderSuccessPage({
   searchParams,
 }: {
-  searchParams: { code?: string; phone?: string };
+  searchParams: Promise<{ code?: string; phone?: string }>;
 }) {
-  const { code, phone } = searchParams;
+  const { code, phone } = await searchParams;
 
   let order = null;
   let booking = null;

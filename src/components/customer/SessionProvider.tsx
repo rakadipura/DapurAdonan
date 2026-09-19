@@ -2,8 +2,6 @@
 
 import { createContext, useContext, useCallback, useReducer, ReactNode } from "react";
 import type { CartItem, CustomerType } from "@/types";
-import type {} from "@/types";
-
 
 interface SessionState {
   cart: CartItem[];
@@ -11,56 +9,51 @@ interface SessionState {
 }
 
 type SessionAction =
-  | { type: "ADD_CART"; product: { id: number; name: string; price: number; imageUrl: string | null; category?: { name: string } }; qty: number; notes?: string }
-  | { type: "UPDATE_CART"; productId: number; qty: number }
-  | { type: "REMOVE_CART"; productId: number }
+  | { type: "ADD_CART"; item: CartItem }
+  | { type: "UPDATE_CART"; cartKey: string; qty: number }
+  | { type: "REMOVE_CART"; cartKey: string }
   | { type: "SET_CONTACT"; contact: CustomerType | null }
   | { type: "CLEAR_CART" };
+
+function getCartKey(item: CartItem): string {
+  const variantKey = item.variantId ?? "none";
+  const addOnsKey = item.selectedAddOns?.sort().join(",") ?? "";
+  return `${item.productId}-${variantKey}-${addOnsKey}`;
+}
 
 function cartReducer(state: SessionState, action: SessionAction): SessionState {
   switch (action.type) {
     case "ADD_CART": {
-      const existing = state.cart.find((c) => c.productId === action.product.id);
-      if (existing) {
+      const newItem = action.item;
+      const newKey = getCartKey(newItem);
+      const existingIndex = state.cart.findIndex((c) => getCartKey(c) === newKey);
+      if (existingIndex >= 0) {
         return {
           ...state,
-          cart: state.cart.map((c) =>
-            c.productId === action.product.id
-              ? { ...c, qty: c.qty + action.qty, notes: action.notes ?? c.notes }
+          cart: state.cart.map((c, i) =>
+            i === existingIndex
+              ? { ...c, qty: c.qty + newItem.qty, notes: newItem.notes ?? c.notes }
               : c
           ),
         };
       }
       return {
         ...state,
-        cart: [
-          ...state.cart,
-          {
-            productId: action.product.id,
-            name: action.product.name,
-            price: action.product.price,
-            imageUrl: action.product.imageUrl,
-            qty: action.qty,
-            notes: action.notes,
-            categoryName: action.product.category?.name ?? "",
-          },
-        ],
+        cart: [...state.cart, newItem],
       };
     }
     case "UPDATE_CART": {
       return {
         ...state,
-        cart: state.cart.map((c) =>
-          c.productId === action.productId
-            ? { ...c, qty: Math.max(0, action.qty) }
-            : c
-        ).filter((c) => c.qty > 0),
+        cart: state.cart
+          .map((c) => (getCartKey(c) === action.cartKey ? { ...c, qty: Math.max(0, action.qty) } : c))
+          .filter((c) => c.qty > 0),
       };
     }
     case "REMOVE_CART": {
       return {
         ...state,
-        cart: state.cart.filter((c) => c.productId !== action.productId),
+        cart: state.cart.filter((c) => getCartKey(c) !== action.cartKey),
       };
     }
     case "SET_CONTACT": {
@@ -76,9 +69,9 @@ function cartReducer(state: SessionState, action: SessionAction): SessionState {
 
 interface SessionContextValue {
   state: SessionState;
-  addToCart: (product: { id: number; name: string; price: number; imageUrl: string | null; category?: { name: string } }, qty: number, notes?: string) => void;
-  updateCartQty: (productId: number, qty: number) => void;
-  removeFromCart: (productId: number) => void;
+  addToCart: (item: CartItem) => void;
+  updateCartQty: (cartKey: string, qty: number) => void;
+  removeFromCart: (cartKey: string) => void;
   setContact: (contact: CustomerType | null) => void;
   clearCart: () => void;
   totalAmount: number;
@@ -90,39 +83,27 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { cart: [], contact: null });
 
-  const addToCart = useCallback(
-    (product: { id: number; name: string; price: number; imageUrl: string | null; category?: { name: string } }, qty: number, notes?: string) => {
-      dispatch({ type: "ADD_CART", product, qty, notes });
-    },
-    [],
-  );
+  const addToCart = useCallback((item: CartItem) => {
+    dispatch({ type: "ADD_CART", item });
+  }, []);
 
-  const updateCartQty = useCallback(
-    (productId: number, qty: number) => {
-      dispatch({ type: "UPDATE_CART", productId, qty });
-    },
-    [],
-  );
+  const updateCartQty = useCallback((cartKey: string, qty: number) => {
+    dispatch({ type: "UPDATE_CART", cartKey, qty });
+  }, []);
 
-  const removeFromCart = useCallback(
-    (productId: number) => {
-      dispatch({ type: "REMOVE_CART", productId });
-    },
-    [],
-  );
+  const removeFromCart = useCallback((cartKey: string) => {
+    dispatch({ type: "REMOVE_CART", cartKey });
+  }, []);
 
-  const setContact = useCallback(
-    (contact: CustomerType | null) => {
-      dispatch({ type: "SET_CONTACT", contact });
-    },
-    [],
-  );
+  const setContact = useCallback((contact: CustomerType | null) => {
+    dispatch({ type: "SET_CONTACT", contact });
+  }, []);
 
   const clearCart = useCallback(() => {
     dispatch({ type: "CLEAR_CART" });
   }, []);
 
-  const totalAmount = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const totalAmount = state.cart.reduce((sum, item) => sum + (item.price + (item.addOnsPrice || 0)) * item.qty, 0);
   const itemCount = state.cart.reduce((sum, item) => sum + item.qty, 0);
 
   return (

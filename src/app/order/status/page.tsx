@@ -19,9 +19,9 @@ const STATUS_LABELS: Record<string, string> = {
 export default async function StatusPage({
   searchParams,
 }: {
-  searchParams: { code?: string; phone?: string };
+  searchParams: Promise<{ code?: string; phone?: string }>;
 }) {
-  const { code, phone } = searchParams;
+  const { code, phone } = await searchParams;
   let order = null;
   let booking = null;
   let error = null;

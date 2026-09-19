@@ -2,6 +2,7 @@ import { prisma } from "./db";
 import type { CustomerType } from "@/types";
 import { toWIB, fromWIBString, formatDateYMD, formatDateLong } from "./settings";
 import { isValidPhone, normalizePhone } from "./regex";
+import { getWhatsAppNumber } from "./settings";
 
 export interface CreateBookingInput {
   date: string; // YYYY-MM-DD in WIB
@@ -9,6 +10,7 @@ export interface CreateBookingInput {
   partySize: number;
   name: string;
   phone: string;
+  email?: string;
 }
 
 export interface BookingWithSlot {
@@ -19,7 +21,12 @@ export interface BookingWithSlot {
   partySize: number;
   name: string;
   phone: string;
+  email?: string;
   status: string;
+  cancelledAt?: Date;
+  cancelReason?: string;
+  rescheduledFromId?: number;
+  rescheduledAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   noShowAt: Date | null;
@@ -37,12 +44,10 @@ export interface SlotAvailability {
 export async function getAvailableSlots(date: string): Promise<SlotAvailability[]> {
   const wibDate = fromWIBString(date);
 
-  // Count bookings for the given date and slot (only non-cancelled ones).
   const bookings = await prisma.booking.findMany({
     where: {
       date: wibDate,
-      status: { not: "CANCELLED" },
-      slotId: { gte: 1 },
+      status: { notIn: ["CANCELLED", "NO_SHOW"] },
     },
     select: { slotId: true, partySize: true, status: true },
   });
@@ -68,7 +73,7 @@ export async function getAvailableSlots(date: string): Promise<SlotAvailability[
 }
 
 export async function createBooking(input: CreateBookingInput): Promise<BookingWithSlot> {
-  const { date, slotId, partySize, name, phone } = input;
+  const { date, slotId, partySize, name, phone, email } = input;
 
   if (!isValidPhone(phone)) {
     throw new Error("Nomor telepon tidak valid");
@@ -79,13 +84,11 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
 
   const wibDate = fromWIBString(date);
 
-  // Validate slot exists and is active.
   const slot = await prisma.bookingSlot.findUnique({ where: { id: slotId } });
   if (!slot || !slot.isActive) {
     throw new Error("Jadwal tidak tersedia");
   }
 
-  // Validate date is not in the past (allow today if after cutoff).
   const nowWIB = toWIB(new Date());
   const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
   const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
@@ -94,20 +97,16 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
     throw new Error("Tanggal booking harus hari ini atau setelahnya");
   }
 
-  // Validate against maxPartySize setting.
   const maxPartySize = await getMaxPartySize();
   if (partySize > maxPartySize) {
     throw new Error(`Jumlah orang melebihi batas maksimum (${maxPartySize})`);
   }
 
-  // Transactional overbooking protection.
   const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
-    // Re-count under the transaction.
     const bookings = await tx.booking.findMany({
       where: {
         date: wibDate,
-        status: { not: "CANCELLED" },
-        slotId: { gte: 1 },
+        status: { notIn: ["CANCELLED", "NO_SHOW"] },
       },
       select: { partySize: true },
     });
@@ -128,6 +127,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
         partySize,
         name,
         phone: normalizePhone(phone),
+        email,
         status: "PENDING",
         createdAt: new Date(),
       },
@@ -149,6 +149,94 @@ export async function getBooking(code: string, phone: string): Promise<BookingWi
   if (!booking) return null;
   if (booking.phone !== normalizePhone(phone)) return null;
   return mapBookingWithSlot(booking);
+}
+
+export async function getBookingByCode(code: string): Promise<BookingWithSlot | null> {
+  const booking = await prisma.booking.findUnique({
+    where: { code },
+    include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+  });
+
+  if (!booking) return null;
+  return mapBookingWithSlot(booking);
+}
+
+export async function cancelBooking(code: string, phone: string, reason?: string): Promise<BookingWithSlot | null> {
+  const booking = await prisma.booking.findUnique({ where: { code } });
+  if (!booking) return null;
+  if (booking.phone !== normalizePhone(phone)) return null;
+
+  const updated = await prisma.booking.update({
+    where: { code },
+    data: {
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancelReason: reason,
+      updatedAt: new Date(),
+    },
+    include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+  });
+
+  return mapBookingWithSlot(updated);
+}
+
+export async function rescheduleBooking(
+  code: string,
+  phone: string,
+  newDate: string,
+  newSlotId: number
+): Promise<BookingWithSlot | null> {
+  const booking = await prisma.booking.findUnique({ where: { code } });
+  if (!booking) return null;
+  if (booking.phone !== normalizePhone(phone)) return null;
+
+  const wibDate = fromWIBString(newDate);
+
+  const slot = await prisma.bookingSlot.findUnique({ where: { id: newSlotId } });
+  if (!slot || !slot.isActive) {
+    throw new Error("Jadwal baru tidak tersedia");
+  }
+
+  const nowWIB = toWIB(new Date());
+  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
+  const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
+  const diffDays = (dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
+  if (diffDays < 0) {
+    throw new Error("Tanggal booking harus hari ini atau setelahnya");
+  }
+
+  const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
+    const bookings = await tx.booking.findMany({
+      where: {
+        date: wibDate,
+        status: { notIn: ["CANCELLED", "NO_SHOW"] },
+      },
+      select: { partySize: true },
+    });
+    const currentCount = bookings.reduce((sum: number, b: { partySize: number }) => sum + b.partySize, 0);
+    const available = slot.capacity - currentCount;
+
+    if (available < booking.partySize) {
+      throw new Error(`Jadwal baru penuh; hanya tersisa ${available} orang`);
+    }
+
+    const updated = await tx.booking.update({
+      where: { code },
+      data: {
+        date: wibDate,
+        slotId: newSlotId,
+        status: "RESCHEDULED",
+        rescheduledFromId: booking.id,
+        rescheduledAt: new Date(),
+        updatedAt: new Date(),
+      },
+      include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+    });
+
+    return updated;
+  });
+
+  return mapBookingWithSlot(result);
 }
 
 export async function updateBookingStatus(code: string, status: string): Promise<BookingWithSlot | null> {
@@ -189,13 +277,42 @@ export async function getBookingDateOptions(days: number = 14): Promise<{ date: 
   for (let i = 1; i <= days; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() + i);
-    if (d.getDay() === 0) continue; // closed Sunday for MVP
+    if (d.getDay() === 0) continue;
     options.push({
       date: formatDateYMD(d),
       label: formatDateLong(d),
     });
   }
   return options;
+}
+
+export async function getBookingStats() {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+  const [todayBookings, pendingBookings, totalBookings] = await Promise.all([
+    prisma.booking.count({
+      where: { date: { gte: todayStart, lt: tomorrowStart }, status: { not: "CANCELLED" } },
+    }),
+    prisma.booking.count({ where: { status: "PENDING" } }),
+    prisma.booking.count({ where: { status: { not: "CANCELLED" } } }),
+  ]);
+
+  return { todayBookings, pendingBookings, totalBookings };
+}
+
+export function generateWhatsAppLink(booking: BookingWithSlot): string {
+  const waNumber = getWhatsAppNumber();
+  const message = `Halo Toko Mini Moni, saya ingin konfirmasi booking meja:\n` +
+    `Kode: ${booking.code}\n` +
+    `Tanggal: ${formatDateLong(new Date(booking.date))}\n` +
+    `Waktu: ${booking.slot.startTime}-${booking.slot.endTime}\n` +
+    `Jumlah orang: ${booking.partySize}\n` +
+    `Nama: ${booking.name}\n` +
+    `Status: ${booking.status}`;
+  return `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
 }
 
 // ---- helpers ----
@@ -208,7 +325,12 @@ function mapBookingWithSlot(booking: {
   partySize: number;
   name: string;
   phone: string;
+  email?: string;
   status: string;
+  cancelledAt?: Date;
+  cancelReason?: string;
+  rescheduledFromId?: number;
+  rescheduledAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   noShowAt: Date | null;
@@ -222,7 +344,12 @@ function mapBookingWithSlot(booking: {
     partySize: booking.partySize,
     name: booking.name,
     phone: booking.phone,
+    email: booking.email,
     status: booking.status,
+    cancelledAt: booking.cancelledAt,
+    cancelReason: booking.cancelReason,
+    rescheduledFromId: booking.rescheduledFromId,
+    rescheduledAt: booking.rescheduledAt,
     createdAt: booking.createdAt,
     updatedAt: booking.updatedAt,
     noShowAt: booking.noShowAt,
@@ -235,9 +362,11 @@ async function getMaxPartySize(): Promise<number> {
   return Number.isFinite(n) && n > 0 ? n : 8;
 }
 
-let __bookingCodeCounter = 0;
 function generateBookingCode(): string {
-  __bookingCodeCounter += 1;
-  const suffix = String(__bookingCodeCounter).padStart(6, "0");
-  return `BKG-${suffix}`;
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
 }

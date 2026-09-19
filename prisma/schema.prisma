@@ -20,19 +20,48 @@ model Category {
 }
 
 model Product {
-  id          Int           @id @default(autoincrement())
-  name        String
-  slug        String        @unique
-  description String        @db.Text
-  price       Int           // in rupiah, stored as integer
-  imageUrl    String?
-  isAvailable Boolean       @default(true)
-  dailyStock  Int?          // null = unlimited
-  categoryId  Int
-  category    Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id            Int           @id @default(autoincrement())
+  name          String
+  slug          String        @unique
+  description   String        @db.Text
+  basePrice     Int           // in rupiah, stored as integer
+  imageUrl      String?
+  isAvailable   Boolean       @default(true)
+  dailyStock    Int?          // null = unlimited
+  leadTimeDays  Int           @default(0) // for custom cakes: days ahead required
+  isCustomCake  Boolean       @default(false)
+  allergens     String[]      // e.g., ["nuts", "dairy", "gluten"]
+  tags          String[]      // e.g., ["best-seller", "vegan", "gluten-free"]
+  categoryId    Int
+  category      Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variants      ProductVariant[]
+  addOns        AddOn[]
+  orderItems    OrderItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model ProductVariant {
+  id        Int          @id @default(autoincrement())
+  name      String       // e.g., "Small (6 inch)", "Medium (8 inch)", "Large (10 inch)"
+  priceDiff Int          // additional price in rupiah (can be negative)
+  isDefault Boolean      @default(false)
+  sortOrder Int          @default(0)
+  productId Int
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  createdAt DateTime     @default(now())
+}
+
+model AddOn {
+  id        Int      @id @default(autoincrement())
+  name      String   // e.g., "Custom message", "Extra frosting", "Birthday candles"
+  price     Int      // in rupiah
+  isRequired Boolean @default(false)
+  sortOrder Int      @default(0)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model BookingSlot {
@@ -49,28 +78,33 @@ model BookingSlot {
 
 model Booking {
   id         Int       @id @default(autoincrement())
-  code       String    @unique @default(cuid())
+  code       String    @unique @default(dbgenerated("substr(md5(random()::text || clock_timestamp()::text), 1, 8)"))
   date       DateTime  @db.Date // booking date (WIB)
   slotId     Int
   slot       BookingSlot @relation(fields: [slotId], references: [id])
   partySize  Int       // 1..maxPartySize
   name       String
-  phone     String
-  status     String   @default("PENDING")
+  phone      String
+  email      String?
+  status     String    @default("PENDING") // PENDING, CONFIRMED, CANCELLED, RESCHEDULED, NO_SHOW, COMPLETED
+  cancelledAt DateTime?
+  cancelReason String?
+  rescheduledFromId Int? // reference to original booking if rescheduled
+  rescheduledAt DateTime?
   createdAt  DateTime
   updatedAt  DateTime  @updatedAt
   noShowAt   DateTime?
 
   @@index([date, slotId])
   @@index([phone])
+  @@index([code])
 }
-
 
 model Order {
   id              Int          @id @default(autoincrement())
-  code            String       @unique @default(cuid())
-  status          String         @default("PENDING")
-  type            String         @default("PICKUP")
+  code            String       @unique @default(dbgenerated("substr(md5(random()::text || clock_timestamp()::text), 1, 8)"))
+  status          String         @default("PENDING") // PENDING, CONFIRMED, BAKING, READY, COMPLETED, CANCELLED
+  type            String         @default("PICKUP") // PICKUP, DELIVERY
 
   customerName    String
   customerPhone   String
@@ -87,8 +121,14 @@ model Order {
 
   notes           String?        @db.Text
 
+  // custom cake fields
+  isCustomCake    Boolean        @default(false)
+  customText      String?        // custom message on cake
+  customDesign    String?        @db.Text // design notes
+  customPhotoUrl  String?        // uploaded reference photo
+
   // payment
-  paymentMethod   String         @default("CASH")
+  paymentMethod   String         @default("CASH") // CASH, TRANSFER, QRIS, EWALLET
   isPaid          Boolean        @default(false) // admin confirms
   paymentProofUrl String?        // stored in DB / external storage ref
 
@@ -102,18 +142,23 @@ model Order {
   @@index([pickupDate])
   @@index([status])
   @@index([customerPhone])
+  @@index([code])
 }
 
-
 model OrderItem {
-  id        Int      @id @default(autoincrement())
-  orderId   Int
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId Int
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  qty       Int
-  notes     String?  @db.Text
-  price     Int      // snapshot of product price at order time in rupiah
+  id            Int      @id @default(autoincrement())
+  orderId       Int
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     Int
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId     Int?     // selected variant
+  variant       ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  qty           Int
+  notes         String?  @db.Text // custom message for this item
+  selectedAddOns String[] // JSON array of add-on IDs
+  addOnsPrice   Int      @default(0) // total add-ons price
+  price         Int      // snapshot of product price at order time in rupiah (including variant price diff)
+  createdAt     DateTime @default(now())
 }
 
 model Setting {

@@ -7,21 +7,32 @@ import { startOfDay, addDays } from "date-fns";
 
 export type OrderStatus = "PENDING" | "CONFIRMED" | "BAKING" | "READY" | "COMPLETED" | "CANCELLED";
 export type OrderType = "PICKUP" | "DELIVERY";
-export type PaymentMethod = "TRANSFER" | "EWALLET" | "CASH";
+export type PaymentMethod = "TRANSFER" | "EWALLET" | "CASH" | "QRIS";
 
 export interface CreateOrderInput {
-  items: Array<{ productId: number; qty: number; notes?: string }>;
+  items: Array<{
+    productId: number;
+    variantId?: number;
+    qty: number;
+    notes?: string;
+    selectedAddOns?: string[];
+  }>;
   type: OrderType;
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
-  pickupDate?: string; // YYYY-MM-DD for pickup
-  pickupWindow?: string; // "HH:mm-HH:mm"
+  pickupDate?: string;
+  pickupWindow?: string;
   deliveryAddress?: string;
   deliveryZone?: string;
   paymentMethod: PaymentMethod;
   paymentProofUrl?: string;
   notes?: string;
+  // custom cake fields
+  isCustomCake?: boolean;
+  customText?: string;
+  customDesign?: string;
+  customPhotoUrl?: string;
 }
 
 export interface OrderWithItems {
@@ -38,6 +49,10 @@ export interface OrderWithItems {
   deliveryZone: string | null;
   deliveryFee: number;
   notes: string | null;
+  isCustomCake: boolean;
+  customText: string | null;
+  customDesign: string | null;
+  customPhotoUrl: string | null;
   paymentMethod: string;
   isPaid: boolean;
   paymentProofUrl: string | null;
@@ -47,10 +62,14 @@ export interface OrderWithItems {
   items: Array<{
     id: number;
     productId: number;
+    variantId: number | null;
     productName: string;
+    variantName: string | null;
     productImageUrl: string | null;
     qty: number;
     notes: string | null;
+    selectedAddOns: string[];
+    addOnsPrice: number;
     price: number;
     lineTotal: number;
   }>;
@@ -61,7 +80,10 @@ export async function getOrder(code: string, phone: string): Promise<OrderWithIt
     where: { code },
     include: {
       itemsOrder: {
-        include: { product: { select: { name: true, imageUrl: true } } },
+        include: {
+          product: { select: { name: true, imageUrl: true } },
+          variant: { select: { name: true, priceDiff: true } },
+        },
       },
     },
   });
@@ -69,15 +91,30 @@ export async function getOrder(code: string, phone: string): Promise<OrderWithIt
   if (!order) return null;
   if (order.customerPhone !== phone) return null;
 
-  const items = order.itemsOrder.map((item) => ({
+  const items = order.itemsOrder.map((item: {
+    id: number;
+    productId: number;
+    variantId: number | null;
+    product: { name: string; imageUrl: string | null };
+    variant: { name: string; priceDiff: number } | null;
+    qty: number;
+    notes: string | null;
+    selectedAddOns: string[];
+    addOnsPrice: number;
+    price: number;
+  }) => ({
     id: item.id,
     productId: item.productId,
+    variantId: item.variantId,
     productName: item.product.name,
+    variantName: item.variant?.name ?? null,
     productImageUrl: item.product.imageUrl,
     qty: item.qty,
     notes: item.notes,
+    selectedAddOns: item.selectedAddOns || [],
+    addOnsPrice: item.addOnsPrice,
     price: item.price,
-    lineTotal: item.qty * item.price,
+    lineTotal: item.qty * item.price + item.addOnsPrice,
   }));
 
   return {
@@ -94,6 +131,10 @@ export async function getOrder(code: string, phone: string): Promise<OrderWithIt
     deliveryZone: order.deliveryZone,
     deliveryFee: order.deliveryFee,
     notes: order.notes,
+    isCustomCake: order.isCustomCake,
+    customText: order.customText,
+    customDesign: order.customDesign,
+    customPhotoUrl: order.customPhotoUrl,
     paymentMethod: order.paymentMethod,
     isPaid: order.isPaid,
     paymentProofUrl: order.paymentProofUrl,
@@ -105,7 +146,24 @@ export async function getOrder(code: string, phone: string): Promise<OrderWithIt
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<OrderWithItems> {
-  const { items, type, customerName, customerPhone, customerEmail, pickupDate, pickupWindow, deliveryAddress, deliveryZone, paymentMethod, paymentProofUrl, notes } = input;
+  const {
+    items,
+    type,
+    customerName,
+    customerPhone,
+    customerEmail,
+    pickupDate,
+    pickupWindow,
+    deliveryAddress,
+    deliveryZone,
+    paymentMethod,
+    paymentProofUrl,
+    notes,
+    isCustomCake = false,
+    customText,
+    customDesign,
+    customPhotoUrl,
+  } = input;
 
   if (!isValidPhone(customerPhone)) {
     throw new Error("Nomor telepon tidak valid");
@@ -114,22 +172,56 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     throw new Error("Alamat email tidak valid");
   }
 
-  // Compute totals and validate stock.
-  const orderItems: { product: { id: number; name: string; imageUrl: string | null; price: number }; qty: number; notes?: string }[] = [];
+  const orderItems: Array<{
+    product: { id: number; name: string; imageUrl: string | null; basePrice: number; dailyStock: number | null; isAvailable: boolean; leadTimeDays: number };
+    variant: { id: number; name: string; priceDiff: number } | null;
+    addOns: Array<{ id: number; name: string; price: number; isRequired: boolean }>;
+    qty: number;
+    notes?: string;
+    selectedAddOnIds: string[];
+  }> = [];
   let subtotal = 0;
 
   for (const item of items) {
     const product = await prisma.product.findUnique({
       where: { id: item.productId },
-      select: { id: true, name: true, imageUrl: true, price: true, dailyStock: true, isAvailable: true },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+        basePrice: true,
+        dailyStock: true,
+        isAvailable: true,
+        leadTimeDays: true,
+        variants: { select: { id: true, name: true, priceDiff: true } },
+        addOns: { select: { id: true, name: true, price: true, isRequired: true } },
+      },
     });
 
     if (!product || !product.isAvailable) {
       throw new Error(`Produk "${item.productId}" tidak tersedia`);
     }
 
+    // Validate variant if provided
+    let variant: { id: number; name: string; priceDiff: number } | null = null;
+    if (item.variantId) {
+      variant = product.variants.find((v: { id: number; name: string; priceDiff: number }) => v.id === item.variantId) ?? null;
+      if (!variant) {
+        throw new Error(`Varian tidak valid untuk "${product.name}"`);
+      }
+    }
+
+    // Validate selected add-ons
+    const selectedAddOns = product.addOns.filter((a: { id: number; name: string; price: number; isRequired: boolean }) => item.selectedAddOns?.includes(String(a.id)));
+    const requiredAddOns = product.addOns.filter((a: { id: number; name: string; price: number; isRequired: boolean }) => a.isRequired);
+    for (const req of requiredAddOns) {
+      if (!selectedAddOns.find((a: { id: number; name: string; price: number; isRequired: boolean }) => a.id === req.id)) {
+        throw new Error(`Add-on wajib "${req.name}" harus dipilih untuk "${product.name}"`);
+      }
+    }
+
+    // Validate daily stock
     if (product.dailyStock !== null) {
-      // Count today's sold quantity for this product (non-cancelled orders on same date)
       const nowWIB = toWIB(new Date());
       const todayStart = startOfDay(nowWIB);
       const todayEnd = addDays(todayStart, 1);
@@ -156,13 +248,32 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       }
     }
 
-    const lineTotal = product.price * item.qty;
+    // Validate lead time for custom cakes
+    if (isCustomCake || product.leadTimeDays > 0) {
+      if (pickupDate) {
+        const pickup = fromWIBString(pickupDate);
+        const nowWIB = toWIB(new Date());
+        const todayStart = startOfDay(nowWIB);
+        const pickupStart = new Date(pickup.getFullYear(), pickup.getMonth(), pickup.getDate());
+        const diffDays = (pickupStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays < product.leadTimeDays) {
+          throw new Error(`Pesanan kue custom memerlukan lead time minimal ${product.leadTimeDays} hari`);
+        }
+      }
+    }
+
+    const basePrice = product.basePrice + (variant?.priceDiff || 0);
+    const addOnsPrice = selectedAddOns.reduce((sum: number, a: { price: number }) => sum + a.price, 0);
+    const lineTotal = (basePrice + addOnsPrice) * item.qty;
     subtotal += lineTotal;
 
     orderItems.push({
-      product: { id: product.id, name: product.name, imageUrl: product.imageUrl, price: product.price },
+      product,
+      variant,
+      addOns: selectedAddOns,
       qty: item.qty,
       notes: item.notes,
+      selectedAddOnIds: selectedAddOns.map((a: { id: number }) => String(a.id)),
     });
   }
 
@@ -215,6 +326,10 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       deliveryZone: deliveryZone || null,
       deliveryFee,
       notes: notes || null,
+      isCustomCake,
+      customText: customText || null,
+      customDesign: customDesign || null,
+      customPhotoUrl: customPhotoUrl || null,
       paymentMethod,
       isPaid: false,
       paymentProofUrl: paymentProofUrl || null,
@@ -223,15 +338,21 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       itemsOrder: {
         create: orderItems.map((item) => ({
           productId: item.product.id,
+          variantId: item.variant?.id ?? null,
           qty: item.qty,
           notes: item.notes || null,
-          price: item.product.price,
+          selectedAddOns: item.selectedAddOnIds,
+          addOnsPrice: item.addOns.reduce((sum: number, a: { price: number }) => sum + a.price, 0),
+          price: item.product.basePrice + (item.variant?.priceDiff || 0),
         })),
       },
     },
     include: {
       itemsOrder: {
-        include: { product: { select: { name: true, imageUrl: true } } },
+        include: {
+          product: { select: { name: true, imageUrl: true } },
+          variant: { select: { name: true, priceDiff: true } },
+        },
       },
     },
   });
@@ -247,7 +368,12 @@ export async function updateOrderStatus(code: string, status: string): Promise<O
       completedAt: status === "COMPLETED" ? new Date() : undefined,
     },
     include: {
-      itemsOrder: { include: { product: { select: { name: true, imageUrl: true } } } },
+      itemsOrder: {
+        include: {
+          product: { select: { name: true, imageUrl: true } },
+          variant: { select: { name: true, priceDiff: true } },
+        },
+      },
     },
   });
 
@@ -260,7 +386,12 @@ export async function confirmPayment(code: string): Promise<OrderWithItems | nul
     where: { code },
     data: { isPaid: true },
     include: {
-      itemsOrder: { include: { product: { select: { name: true, imageUrl: true } } } },
+      itemsOrder: {
+        include: {
+          product: { select: { name: true, imageUrl: true } },
+          variant: { select: { name: true, priceDiff: true } },
+        },
+      },
     },
   });
 
@@ -275,12 +406,48 @@ export async function getTodayOrders(): Promise<OrderWithItems[]> {
 
   const orders = await prisma.order.findMany({
     where: { createdAt: { gte: todayStart, lt: tomorrowStart } },
-    include: { itemsOrder: { include: { product: { select: { name: true, imageUrl: true } } } } },
+    include: {
+      itemsOrder: {
+        include: {
+          product: { select: { name: true, imageUrl: true } },
+          variant: { select: { name: true, priceDiff: true } },
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
     take: 3,
   });
 
   return orders.map(mapOrderWithItems);
+}
+
+export async function getProductAvailability(productId: number): Promise<{ available: number; sold: number; total: number } | null> {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { dailyStock: true, isAvailable: true },
+  });
+  if (!product) return null;
+  if (product.dailyStock === null) return { available: -1, sold: 0, total: -1 };
+
+  const nowWIB = toWIB(new Date());
+  const todayStart = startOfDay(nowWIB);
+  const todayEnd = addDays(todayStart, 1);
+
+  const soldToday = await prisma.orderItem.groupBy({
+    by: ["productId"],
+    where: {
+      productId,
+      order: {
+        status: { in: ["PENDING", "CONFIRMED", "BAKING", "READY", "COMPLETED"] },
+        createdAt: { gte: todayStart, lt: todayEnd },
+      },
+    },
+    _sum: { qty: true },
+  });
+
+  const sold = soldToday[0]?._sum.qty || 0;
+  const available = Math.max(0, product.dailyStock - sold);
+  return { available, sold, total: product.dailyStock };
 }
 
 // ---- helpers ----
@@ -299,6 +466,10 @@ function mapOrderWithItems(order: {
   deliveryZone: string | null;
   deliveryFee: number;
   notes: string | null;
+  isCustomCake: boolean;
+  customText: string | null;
+  customDesign: string | null;
+  customPhotoUrl: string | null;
   paymentMethod: string;
   isPaid: boolean;
   paymentProofUrl: string | null;
@@ -308,9 +479,13 @@ function mapOrderWithItems(order: {
   itemsOrder: Array<{
     id: number;
     productId: number;
+    variantId: number | null;
     product: { name: string; imageUrl: string | null };
+    variant: { name: string; priceDiff: number } | null;
     qty: number;
     notes: string | null;
+    selectedAddOns: string[];
+    addOnsPrice: number;
     price: number;
   }>;
 }): OrderWithItems {
@@ -328,21 +503,40 @@ function mapOrderWithItems(order: {
     deliveryZone: order.deliveryZone,
     deliveryFee: order.deliveryFee,
     notes: order.notes,
+    isCustomCake: order.isCustomCake,
+    customText: order.customText,
+    customDesign: order.customDesign,
+    customPhotoUrl: order.customPhotoUrl,
     paymentMethod: order.paymentMethod,
     isPaid: order.isPaid,
     paymentProofUrl: order.paymentProofUrl,
     total: order.total,
     createdAt: order.createdAt,
     completedAt: order.completedAt,
-    items: order.itemsOrder.map((item) => ({
+    items: order.itemsOrder.map((item: {
+      id: number;
+      productId: number;
+      variantId: number | null;
+      product: { name: string; imageUrl: string | null };
+      variant: { name: string; priceDiff: number } | null;
+      qty: number;
+      notes: string | null;
+      selectedAddOns: string[];
+      addOnsPrice: number;
+      price: number;
+    }) => ({
       id: item.id,
       productId: item.productId,
+      variantId: item.variantId,
       productName: item.product.name,
+      variantName: item.variant?.name ?? null,
       productImageUrl: item.product.imageUrl,
       qty: item.qty,
       notes: item.notes,
+      selectedAddOns: item.selectedAddOns || [],
+      addOnsPrice: item.addOnsPrice,
       price: item.price,
-      lineTotal: item.qty * item.price,
+      lineTotal: item.qty * item.price + item.addOnsPrice,
     })),
   };
 }
@@ -361,7 +555,10 @@ async function getPickupWindowsRaw(): Promise<PickupWindow[]> {
 
 let __orderCodeCounter = 0;
 function generateOrderCode(): string {
-  __orderCodeCounter += 1;
-  const suffix = String(__orderCodeCounter).padStart(6, "0");
-  return `MM-${suffix}`;
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
 }

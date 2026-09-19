@@ -33,7 +33,7 @@ export default async function BookingPage() {
         name: true,
         slug: true,
         description: true,
-        price: true,
+        basePrice: true,
         imageUrl: true,
         dailyStock: true,
         isAvailable: true,

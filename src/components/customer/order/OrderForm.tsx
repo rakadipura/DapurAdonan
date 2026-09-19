@@ -3,7 +3,6 @@
 import { useState, useTransition, useCallback } from "react";
 import { useSession } from "@/components/customer/SessionProvider";
 import type { Product, CustomerType, PickupWindow, DeliveryZone } from "@/types";
-
 import { formatRupiah } from "@/lib/money";
 
 interface OrderFormProps {
@@ -14,8 +13,19 @@ interface OrderFormProps {
     deliveryZones: DeliveryZone[];
     maxPartySize: number;
     transferInfo: string | null;
+    waNumber: string;
   };
   featuredOrders?: Array<{ code: string; customerName: string; total: number; status: string }>;
+}
+
+function getCartKey(item: {
+  productId: number;
+  variantId?: number;
+  selectedAddOns?: string[];
+}): string {
+  const variantKey = item.variantId ?? "none";
+  const addOnsKey = item.selectedAddOns?.sort().join(",") ?? "";
+  return `${item.productId}-${variantKey}-${addOnsKey}`;
 }
 
 export function OrderForm({
@@ -23,7 +33,7 @@ export function OrderForm({
   settings,
   featuredOrders = [],
 }: OrderFormProps) {
-  const { state, addToCart, updateCartQty, removeFromCart, clearCart, totalAmount, itemCount } = useSession();
+  const { state, updateCartQty, removeFromCart, clearCart, totalAmount, itemCount } = useSession();
   const [step, setStep] = useState<"cart" | "checkout">("cart");
   const [isSubmitting, startTransition] = useTransition();
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -34,10 +44,15 @@ export function OrderForm({
   const [pickupWindow, setPickupWindow] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryZone, setDeliveryZone] = useState(settings.deliveryZones[0]?.zone ?? "");
-  const [paymentMethod, setPaymentMethod] = useState<"TRANSFER" | "EWALLET" | "CASH">("CASH");
+  const [paymentMethod, setPaymentMethod] = useState<"TRANSFER" | "EWALLET" | "CASH" | "QRIS">("CASH");
   const [notes, setNotes] = useState("");
 
   const availableWindows = settings.pickupWindows;
+
+  const hasCustomCake = state.cart.some((item) => {
+    const product = products.find((p) => p.id === item.productId);
+    return product?.isCustomCake;
+  });
 
   const handlePlaceOrder = useCallback(() => {
     setOrderError(null);
@@ -46,8 +61,10 @@ export function OrderForm({
         const payload = {
           items: state.cart.map((c) => ({
             productId: c.productId,
+            variantId: c.variantId,
             qty: c.qty,
             notes: c.notes,
+            selectedAddOns: c.selectedAddOns,
           })),
           type: orderType,
           customerName: contact.name,
@@ -59,6 +76,11 @@ export function OrderForm({
           deliveryZone: orderType === "DELIVERY" ? deliveryZone : undefined,
           paymentMethod,
           notes: notes || undefined,
+          isCustomCake: hasCustomCake,
+          customText: hasCustomCake ? state.cart.find((c) => {
+            const p = products.find((pp) => pp.id === c.productId);
+            return p?.isCustomCake;
+          })?.notes : undefined,
         };
 
         const res = await fetch("/api/orders", {
@@ -82,7 +104,7 @@ export function OrderForm({
         setOrderError("Terjadi kesalahan. Coba lagi.");
       }
     });
-  }, [state.cart, contact, orderType, pickupDate, pickupWindow, deliveryAddress, deliveryZone, paymentMethod, notes, clearCart]);
+  }, [state.cart, contact, orderType, pickupDate, pickupWindow, deliveryAddress, deliveryZone, paymentMethod, notes, clearCart, products, hasCustomCake]);
 
   return (
     <div className="rounded-2xl border border-[#efe2c7] bg-white p-6 shadow-md">
@@ -110,43 +132,61 @@ export function OrderForm({
 
         {step === "cart" && state.cart.length > 0 && (
           <div className="mt-4 space-y-2">
-            {state.cart.map((item) => (
-              <div key={item.productId} className="flex items-center justify-between rounded-lg bg-[#fffaf0] px-3 py-2 text-sm">
-                <div className="flex items-center gap-2 min-w-0">
-                  {item.imageUrl && (
-                    <img src={item.imageUrl} alt="" className="h-8 w-8 rounded object-cover flex-shrink-0" />
-                  )}
-                  <span className="truncate text-[#6b4a2b]">{item.name}</span>
+            {state.cart.map((item) => {
+              const product = products.find((p) => p.id === item.productId);
+              const variant = product?.variants?.find((v) => v.id === item.variantId);
+              const cartKey = getCartKey(item);
+              return (
+                <div key={cartKey} className="flex items-center justify-between rounded-lg bg-[#fffaf0] px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {item.imageUrl && (
+                      <img src={item.imageUrl} alt="" className="h-8 w-8 rounded object-cover flex-shrink-0" />
+                    )}
+                    <div className="truncate">
+                      <span className="text-[#6b4a2b] font-medium">{item.name}</span>
+                      {variant && (
+                        <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-[#FCE9C8] text-[#A0522D]">{variant.name}</span>
+                      )}
+                      {item.selectedAddOns && item.selectedAddOns.length > 0 && (
+                        <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-[#e6c98a] text-[#A0522D]">
+                          +{item.selectedAddOns.length} tambahan
+                        </span>
+                      )}
+                      {item.notes && (
+                        <div className="text-xs text-[#5a4a3a] truncate">{item.notes}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => updateCartQty(cartKey, item.qty - 1)}
+                      className="h-6 w-6 rounded border border-[#e6c98a] text-center text-xs font-medium text-[#6b4a2b] hover:bg-[#fff6e6]"
+                    >
+                      −
+                    </button>
+                    <span className="w-6 text-center text-[#6b4a2b] font-medium">{item.qty}</span>
+                    <button
+                      type="button"
+                      onClick={() => updateCartQty(cartKey, item.qty + 1)}
+                      className="h-6 w-6 rounded border border-[#e6c98a] text-center text-xs font-medium text-[#6b4a2b] hover:bg-[#fff6e6]"
+                    >
+                      +
+                    </button>
+                    <span className="ml-1 text-[#A0522D] font-medium">
+                      {formatRupiah((item.price + (item.addOnsPrice || 0)) * item.qty)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeFromCart(cartKey)}
+                      className="ml-1 text-red-500 hover:text-red-700 text-xs font-medium"
+                    >
+                      Hapus
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => updateCartQty(item.productId, item.qty - 1)}
-                    className="h-6 w-6 rounded border border-[#e6c98a] text-center text-xs font-medium text-[#6b4a2b] hover:bg-[#fff6e6]"
-                  >
-                    −
-                  </button>
-                  <span className="w-6 text-center text-[#6b4a2b] font-medium">{item.qty}</span>
-                  <button
-                    type="button"
-                    onClick={() => updateCartQty(item.productId, item.qty + 1)}
-                    className="h-6 w-6 rounded border border-[#e6c98a] text-center text-xs font-medium text-[#6b4a2b] hover:bg-[#fff6e6]"
-                  >
-                    +
-                  </button>
-                  <span className="ml-1 text-[#A0522D] font-medium">
-                    {formatRupiah(item.price * item.qty)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeFromCart(item.productId)}
-                    className="ml-1 text-red-500 hover:text-red-700 text-xs font-medium"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             <div className="flex justify-end pt-2 text-right">
               <span className="text-base font-bold text-[#6b4a2b]">
                 Total: {formatRupiah(totalAmount)}
@@ -290,8 +330,8 @@ export function OrderForm({
           {/* Payment */}
           <div>
             <h3 className="mb-2 text-sm font-medium text-[#6b4a2b]">Metode Pembayaran</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {(["CASH", "TRANSFER", "EWALLET"] as const).map((method) => (
+            <div className="grid grid-cols-4 gap-2">
+              {(["CASH", "TRANSFER", "QRIS", "EWALLET"] as const).map((method) => (
                 <button
                   key={method}
                   type="button"
@@ -302,12 +342,17 @@ export function OrderForm({
                       : "border-[#e6c98a] bg-white text-[#5a4a3a]"
                   }`}
                 >
-                  {method === "CASH" ? "Tunai" : method === "TRANSFER" ? "Transfer" : "E-Wallet"}
+                  {method === "CASH" ? "Tunai" : method === "TRANSFER" ? "Transfer" : method === "QRIS" ? "QRIS" : "E-Wallet"}
                 </button>
               ))}
             </div>
             {paymentMethod === "TRANSFER" && settings.transferInfo && (
               <div className="mt-2 rounded-lg bg-[#FFF6E6] p-3 text-xs text-[#5a4a3a]" dangerouslySetInnerHTML={{ __html: settings.transferInfo }} />
+            )}
+            {paymentMethod === "QRIS" && (
+              <div className="mt-2 rounded-lg bg-[#FFF6E6] p-3 text-xs text-[#5a4a3a]">
+                QRIS akan ditampilkan setelah pesanan dikonfirmasi. Silakan scan menggunakan aplikasi e-wallet/banking Anda.
+              </div>
             )}
           </div>
 
@@ -332,7 +377,13 @@ export function OrderForm({
           <button
             type="button"
             onClick={handlePlaceOrder}
-            disabled={isSubmitting || contact.name === "" || contact.phone === "" || (orderType === "PICKUP" && (!pickupDate || !pickupWindow)) || (orderType === "DELIVERY" && (!deliveryAddress || !deliveryZone))}
+            disabled={
+              isSubmitting ||
+              contact.name === "" ||
+              contact.phone === "" ||
+              (orderType === "PICKUP" && (!pickupDate || !pickupWindow)) ||
+              (orderType === "DELIVERY" && (!deliveryAddress || !deliveryZone))
+            }
             className="w-full rounded-lg border-0 bg-[#A0522D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8b4513] disabled:cursor-not-allowed disabled:bg-[#d9b38c]"
           >
             {isSubmitting ? "Memproses…" : `Pesan Sekarang · ${formatRupiah(totalAmount)}`}
