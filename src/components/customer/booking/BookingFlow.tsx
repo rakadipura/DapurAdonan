@@ -51,12 +51,21 @@ export function BookingFlow({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ code: string; phone: string } | null>(null);
 
-  const handleDateChange = (date: string) => {
+  const handleDateChange = async (date: string) => {
     setSelectedDate(date);
     setSelectedSlot(null);
-    setStep("date");
+    setStep("details");
     setError(null);
     setSuccess(null);
+    try {
+      const res = await fetch(`/api/bookings/slots?date=${date}`);
+      const data = await res.json();
+      if (data.slots) {
+        setAvailableSlots(data.slots);
+      }
+    } catch {
+      setAvailableSlots(slots);
+    }
   };
 
   const handleSubmit = () => {
