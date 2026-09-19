@@ -37,14 +37,13 @@ async function getKey(): Promise<CryptoKey> {
   );
 }
 
-function toBase64Url(bytes: ArrayBuffer): string {
-  const arr = new Uint8Array(bytes);
+function toBase64Url(bytes: Uint8Array): string {
   let str = "";
-  for (const b of arr) str += String.fromCharCode(b);
+  for (const b of bytes) str += String.fromCharCode(b);
   return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function fromBase64Url(b64url: string): Uint8Array {
+function fromBase64Url(b64url: string): Uint8Array<ArrayBuffer> {
   const padded = b64url.replace(/-/g, "+").replace(/_/g, "/").padEnd(
     Math.ceil(b64url.length / 4) * 4,
     "=",
@@ -60,8 +59,9 @@ export async function createSessionToken(): Promise<string> {
   const expiresAt = Date.now() + ADMIN_SESSION_MAX_AGE_SECONDS * 1000;
   const payload = String(expiresAt);
   const key = await getKey();
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
-  return `${toBase64Url(new TextEncoder().encode(payload).buffer as ArrayBuffer)}.${toBase64Url(sig)}`;
+  const payloadBytes = new TextEncoder().encode(payload);
+  const sig = await crypto.subtle.sign("HMAC", key, payloadBytes);
+  return `${toBase64Url(payloadBytes)}.${toBase64Url(new Uint8Array(sig))}`;
 }
 
 /** Verify a session token's signature and that it hasn't expired. */

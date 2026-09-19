@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local dev/run artifacts (worktree notes, logs) - not meant to be committed
+.freebuff/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
