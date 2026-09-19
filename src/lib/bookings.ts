@@ -4,6 +4,23 @@ import { toWIB, fromWIBString, formatDateYMD, formatDateLong } from "./settings"
 import { isValidPhone, normalizePhone } from "./regex";
 import { getWhatsAppNumber } from "./settings";
 
+export type BookingStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "CANCELLED"
+  | "RESCHEDULED"
+  | "NO_SHOW"
+  | "COMPLETED";
+
+export const BOOKING_STATUSES: BookingStatus[] = [
+  "PENDING",
+  "CONFIRMED",
+  "CANCELLED",
+  "RESCHEDULED",
+  "NO_SHOW",
+  "COMPLETED",
+];
+
 export interface CreateBookingInput {
   date: string; // YYYY-MM-DD in WIB
   slotId: number;
@@ -239,19 +256,54 @@ export async function rescheduleBooking(
   return mapBookingWithSlot(result);
 }
 
-export async function updateBookingStatus(code: string, status: string): Promise<BookingWithSlot | null> {
-  const booking = await prisma.booking.update({
-    where: { code },
-    data: {
-      status,
-      noShowAt: status === "NO_SHOW" ? new Date() : undefined,
-      updatedAt: new Date(),
-    },
+export async function updateBookingStatus(code: string, status: BookingStatus): Promise<BookingWithSlot | null> {
+  if (!BOOKING_STATUSES.includes(status)) {
+    throw new Error(`Status booking tidak valid: ${status}`);
+  }
+
+  try {
+    const booking = await prisma.booking.update({
+      where: { code },
+      data: {
+        status,
+        noShowAt: status === "NO_SHOW" ? new Date() : undefined,
+        updatedAt: new Date(),
+      },
+      include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+    });
+    return mapBookingWithSlot(booking);
+  } catch {
+    return null;
+  }
+}
+
+export interface BookingListFilter {
+  status?: BookingStatus;
+  /** "today" (default) restricts to bookings dated today (WIB); "all" returns everything. */
+  scope?: "today" | "all";
+}
+
+/** List bookings for the admin dashboard, newest first. */
+export async function getBookings(filter: BookingListFilter = {}): Promise<BookingWithSlot[]> {
+  const { status, scope = "today" } = filter;
+
+  const where: { status?: BookingStatus; date?: { gte: Date; lt: Date } } = {};
+  if (status) where.status = status;
+  if (scope === "today") {
+    const nowWIB = toWIB(new Date());
+    const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    where.date = { gte: todayStart, lt: tomorrowStart };
+  }
+
+  const bookings = await prisma.booking.findMany({
+    where,
     include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+    orderBy: { createdAt: "desc" },
   });
 
-  if (!booking) return null;
-  return mapBookingWithSlot(booking);
+  return bookings.map(mapBookingWithSlot);
 }
 
 export async function getTodayBookings(): Promise<BookingWithSlot[]> {
@@ -287,8 +339,8 @@ export async function getBookingDateOptions(days: number = 14): Promise<{ date: 
 }
 
 export async function getBookingStats() {
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  const nowWIB = toWIB(new Date());
+  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 

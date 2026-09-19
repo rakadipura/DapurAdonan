@@ -9,6 +9,15 @@ export type OrderStatus = "PENDING" | "CONFIRMED" | "BAKING" | "READY" | "COMPLE
 export type OrderType = "PICKUP" | "DELIVERY";
 export type PaymentMethod = "TRANSFER" | "EWALLET" | "CASH" | "QRIS";
 
+export const ORDER_STATUSES: OrderStatus[] = [
+  "PENDING",
+  "CONFIRMED",
+  "BAKING",
+  "READY",
+  "COMPLETED",
+  "CANCELLED",
+];
+
 export interface CreateOrderInput {
   items: Array<{
     productId: number;
@@ -360,13 +369,60 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
   return mapOrderWithItems(order);
 }
 
-export async function updateOrderStatus(code: string, status: string): Promise<OrderWithItems | null> {
-  const order = await prisma.order.update({
+export async function updateOrderStatus(code: string, status: OrderStatus): Promise<OrderWithItems | null> {
+  if (!ORDER_STATUSES.includes(status)) {
+    throw new Error(`Status pesanan tidak valid: ${status}`);
+  }
+
+  try {
+    const order = await prisma.order.update({
+      where: { code },
+      data: {
+        status,
+        completedAt: status === "COMPLETED" ? new Date() : undefined,
+      },
+      include: {
+        itemsOrder: {
+          include: {
+            product: { select: { name: true, imageUrl: true } },
+            variant: { select: { name: true, priceDiff: true } },
+          },
+        },
+      },
+    });
+    return mapOrderWithItems(order);
+  } catch {
+    // Prisma throws (P2025) when the `code` doesn't match any row.
+    return null;
+  }
+}
+
+export async function confirmPayment(code: string): Promise<OrderWithItems | null> {
+  try {
+    const order = await prisma.order.update({
+      where: { code },
+      data: { isPaid: true },
+      include: {
+        itemsOrder: {
+          include: {
+            product: { select: { name: true, imageUrl: true } },
+            variant: { select: { name: true, priceDiff: true } },
+          },
+        },
+      },
+    });
+    return mapOrderWithItems(order);
+  } catch {
+    return null;
+  }
+}
+
+/** Look up an order by its reference code only — for admin use, where the
+ * caller is already authenticated and doesn't need the phone-number check
+ * that guards the customer-facing lookup. */
+export async function getOrderByCode(code: string): Promise<OrderWithItems | null> {
+  const order = await prisma.order.findUnique({
     where: { code },
-    data: {
-      status,
-      completedAt: status === "COMPLETED" ? new Date() : undefined,
-    },
     include: {
       itemsOrder: {
         include: {
@@ -376,15 +432,31 @@ export async function updateOrderStatus(code: string, status: string): Promise<O
       },
     },
   });
-
   if (!order) return null;
   return mapOrderWithItems(order);
 }
 
-export async function confirmPayment(code: string): Promise<OrderWithItems | null> {
-  const order = await prisma.order.update({
-    where: { code },
-    data: { isPaid: true },
+export interface OrderListFilter {
+  /** Filter to a single status. Omit for all statuses. */
+  status?: OrderStatus;
+  /** "today" (default) restricts to orders created today (WIB); "all" returns everything. */
+  scope?: "today" | "all";
+}
+
+/** List orders for the admin dashboard, newest first. */
+export async function getOrders(filter: OrderListFilter = {}): Promise<OrderWithItems[]> {
+  const { status, scope = "today" } = filter;
+
+  const where: { status?: OrderStatus; createdAt?: { gte: Date; lt: Date } } = {};
+  if (status) where.status = status;
+  if (scope === "today") {
+    const nowWIB = toWIB(new Date());
+    const todayStart = startOfDay(nowWIB);
+    where.createdAt = { gte: todayStart, lt: addDays(todayStart, 1) };
+  }
+
+  const orders = await prisma.order.findMany({
+    where,
     include: {
       itemsOrder: {
         include: {
@@ -393,10 +465,41 @@ export async function confirmPayment(code: string): Promise<OrderWithItems | nul
         },
       },
     },
+    orderBy: { createdAt: "desc" },
   });
 
-  if (!order) return null;
-  return mapOrderWithItems(order);
+  return orders.map(mapOrderWithItems);
+}
+
+export interface OrderStats {
+  todayCount: number;
+  pendingCount: number;
+  unpaidCount: number;
+  todayRevenue: number;
+}
+
+/** Summary numbers for the admin dashboard's stat cards. */
+export async function getOrderStats(): Promise<OrderStats> {
+  const nowWIB = toWIB(new Date());
+  const todayStart = startOfDay(nowWIB);
+  const todayEnd = addDays(todayStart, 1);
+
+  const [todayCount, pendingCount, unpaidCount, todayRevenue] = await Promise.all([
+    prisma.order.count({ where: { createdAt: { gte: todayStart, lt: todayEnd } } }),
+    prisma.order.count({ where: { status: "PENDING" } }),
+    prisma.order.count({ where: { isPaid: false, status: { notIn: ["CANCELLED"] } } }),
+    prisma.order.aggregate({
+      where: { createdAt: { gte: todayStart, lt: todayEnd }, status: { not: "CANCELLED" } },
+      _sum: { total: true },
+    }),
+  ]);
+
+  return {
+    todayCount,
+    pendingCount,
+    unpaidCount,
+    todayRevenue: todayRevenue._sum.total ?? 0,
+  };
 }
 
 export async function getTodayOrders(): Promise<OrderWithItems[]> {
