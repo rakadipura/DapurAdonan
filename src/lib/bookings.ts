@@ -1,9 +1,7 @@
 import { prisma } from "./db";
 import type { CustomerType } from "@/types";
-import { toWIB, fromWIBString, formatDateYMD, formatDateLong, latestAllowedBookingDate } from "./settings";
+import { toWIB, fromWIBString, formatDateYMD, formatDateLong } from "./settings";
 import { isValidPhone, normalizePhone } from "./regex";
-import { formatRupiah } from "./money";
-import { startOfDay, addDays, isWeekend } from "date-fns";
 
 export interface CreateBookingInput {
   date: string; // YYYY-MM-DD in WIB
@@ -44,7 +42,7 @@ export async function getAvailableSlots(date: string): Promise<SlotAvailability[
     where: {
       date: wibDate,
       status: { not: "CANCELLED" },
-      slotId: { not: null, not: 0 },
+      slotId: { gte: 1 },
     },
     select: { slotId: true, partySize: true, status: true },
   });
@@ -59,7 +57,7 @@ export async function getAvailableSlots(date: string): Promise<SlotAvailability[
     counts[b.slotId] = (counts[b.slotId] || 0) + b.partySize;
   }
 
-  return slots.map((s) => ({
+  return slots.map((s: { id: number; name: string; startTime: string; endTime: string; capacity: number }) => ({
     slotId: s.id,
     name: s.name,
     startTime: s.startTime,
@@ -89,8 +87,8 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
 
   // Validate date is not in the past (allow today if after cutoff).
   const nowWIB = toWIB(new Date());
-  const todayStart = startOfDay(nowWIB);
-  const dateStart = startOfDay(wibDate);
+  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
+  const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
   const diffDays = (dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
   if (diffDays < 0) {
     throw new Error("Tanggal booking harus hari ini atau setelahnya");
@@ -103,13 +101,17 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
   }
 
   // Transactional overbooking protection.
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
     // Re-count under the transaction.
     const bookings = await tx.booking.findMany({
-      where: { date: wibDate, status: { not: "CANCELLED" }, slotId },
+      where: {
+        date: wibDate,
+        status: { not: "CANCELLED" },
+        slotId: { gte: 1 },
+      },
       select: { partySize: true },
     });
-    const currentCount = bookings.reduce((sum, b) => sum + b.partySize, 0);
+    const currentCount = bookings.reduce((sum: number, b: { partySize: number }) => sum + b.partySize, 0);
     const available = slot.capacity - currentCount;
 
     if (available < partySize) {
@@ -166,8 +168,9 @@ export async function updateBookingStatus(code: string, status: string): Promise
 
 export async function getTodayBookings(): Promise<BookingWithSlot[]> {
   const nowWIB = toWIB(new Date());
-  const todayStart = startOfDay(nowWIB);
-  const tomorrowStart = addDays(todayStart, 1);
+  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
   const bookings = await prisma.booking.findMany({
     where: {
@@ -186,7 +189,7 @@ export async function getBookingDateOptions(days: number = 14): Promise<{ date: 
   for (let i = 1; i <= days; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() + i);
-    if (isWeekend(d)) continue; // shop closed Sunday; Monday=Friday? We'll close Sunday only for MVP.
+    if (d.getDay() === 0) continue; // closed Sunday for MVP
     options.push({
       date: formatDateYMD(d),
       label: formatDateLong(d),
@@ -234,7 +237,6 @@ async function getMaxPartySize(): Promise<number> {
 
 let __bookingCodeCounter = 0;
 function generateBookingCode(): string {
-  _codeCounter += 1;
   __bookingCodeCounter += 1;
   const suffix = String(__bookingCodeCounter).padStart(6, "0");
   return `BKG-${suffix}`;

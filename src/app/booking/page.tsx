@@ -7,14 +7,23 @@ import { BookingFlow } from "@/components/customer/booking/BookingFlow";
 
 export const metadata: Metadata = {
   title: "Booking Meja — Toko Mini Moni",
-  description: "R(book a table diners for Toko Mini Moni. Choose a date, time slot, and party size.",
+  description: "Book a table for Toko Mini Moni. Choose a date, time slot, and party size.",
 };
 
 export default async function BookingPage() {
+  if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL == null) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-red-600">
+        Database not configured.
+      </div>
+    );
+  }
+
   const [categories, products, slots, dateOptions, maxPartySize, leadHours] = await Promise.all([
     prisma.category.findMany({
       where: { isVisible: true },
       orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true, slug: true },
     }),
     prisma.product.findMany({
       where: { isAvailable: true },
@@ -58,7 +67,7 @@ export default async function BookingPage() {
             <h1 className="mt-4 text-3xl font-bold text-[#6b4a2b]">Booking Meja</h1>
             <p className="mt-2 text-base text-[#5a4a3a]">
               Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni.
-              Hanya tersedia hingga 8 orang per meja.
+              Hanya tersedia hingga {String(maxPartySize)} orang per meja.
             </p>
           </header>
 

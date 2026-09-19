@@ -1,10 +1,11 @@
 import { prisma } from "./db";
 import type { CustomerType, DeliveryZone, PickupWindow } from "@/types";
-import { toWIB, fromWIBString, formatDateYMD, toRupiahInt, formatDateLong } from "./settings";
+import { toWIB, fromWIBString, formatDateYMD } from "./settings";
 import { isValidPhone, isValidEmail } from "./regex";
-import { formatRupiah } from "./money";
-import { addDays, startOfDay } from "date-fns";
+import { formatRupiah, toRupiahInt } from "./money";
+import { startOfDay, addDays } from "date-fns";
 
+export type OrderStatus = "PENDING" | "CONFIRMED" | "BAKING" | "READY" | "COMPLETED" | "CANCELLED";
 export type OrderType = "PICKUP" | "DELIVERY";
 export type PaymentMethod = "TRANSFER" | "EWALLET" | "CASH";
 
@@ -60,9 +61,7 @@ export async function getOrder(code: string, phone: string): Promise<OrderWithIt
     where: { code },
     include: {
       itemsOrder: {
-        include: {
-          product: { select: { name: true, imageUrl: true } },
-        },
+        include: { product: { select: { name: true, imageUrl: true } } },
       },
     },
   });
@@ -131,9 +130,9 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
 
     if (product.dailyStock !== null) {
       // Count today's sold quantity for this product (non-cancelled orders on same date)
-      const todayStart = startOfDay(new Date()); // WIB-ish; acceptable for daily stock snapshot
-      const todayEnd = new Date(todayStart);
-      todayEnd.setDate(todayEnd.getDate() + 1);
+      const nowWIB = toWIB(new Date());
+      const todayStart = startOfDay(nowWIB);
+      const todayEnd = addDays(todayStart, 1);
 
       const soldToday = await prisma.orderItem.groupBy({
         by: ["productId"],
@@ -176,7 +175,6 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       throw new Error("Zona pengiriman tidak ditemukan");
     }
     deliveryFee = zone.baseFee;
-    // If no freeMin threshold reached, we keep baseFee; further distance calc omitted for MVP.
   }
 
   const total = subtotal + deliveryFee;
@@ -191,11 +189,10 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     if (!validWindow) {
       throw new Error("Jadwal pengambilan tidak tersedia");
     }
-    // Ensure pickup date is in the future (at least tomorrow, or today if after cutoff).
     const pickup = fromWIBString(pickupDate);
     const nowWIB = toWIB(new Date());
     const todayStart = startOfDay(nowWIB);
-    const pickupStart = startOfDay(pickup);
+    const pickupStart = new Date(pickup.getFullYear(), pickup.getMonth(), pickup.getDate());
     const diffDays = (pickupStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
     if (diffDays < 0) {
       throw new Error("Tanggal pengambilan harus hari ini atau setelahnya");
@@ -234,9 +231,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     },
     include: {
       itemsOrder: {
-        include: {
-          product: { select: { name: true, imageUrl: true } },
-        },
+        include: { product: { select: { name: true, imageUrl: true } } },
       },
     },
   });
@@ -244,7 +239,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
   return mapOrderWithItems(order);
 }
 
-export async function updateOrderStatus(code: string, status: string, byAdminId?: number): Promise<OrderWithItems | null> {
+export async function updateOrderStatus(code: string, status: string): Promise<OrderWithItems | null> {
   const order = await prisma.order.update({
     where: { code },
     data: {
@@ -252,9 +247,7 @@ export async function updateOrderStatus(code: string, status: string, byAdminId?
       completedAt: status === "COMPLETED" ? new Date() : undefined,
     },
     include: {
-      itemsOrder: {
-        include: { product: { select: { name: true, imageUrl: true } } },
-      },
+      itemsOrder: { include: { product: { select: { name: true, imageUrl: true } } } },
     },
   });
 
@@ -267,9 +260,7 @@ export async function confirmPayment(code: string): Promise<OrderWithItems | nul
     where: { code },
     data: { isPaid: true },
     include: {
-      itemsOrder: {
-        include: { product: { select: { name: true, imageUrl: true } } },
-      },
+      itemsOrder: { include: { product: { select: { name: true, imageUrl: true } } } },
     },
   });
 
@@ -283,15 +274,10 @@ export async function getTodayOrders(): Promise<OrderWithItems[]> {
   const tomorrowStart = addDays(todayStart, 1);
 
   const orders = await prisma.order.findMany({
-    where: {
-      createdAt: { gte: todayStart, lt: tomorrowStart },
-    },
-    include: {
-      itemsOrder: {
-        include: { product: { select: { name: true, imageUrl: true } } },
-      },
-    },
+    where: { createdAt: { gte: todayStart, lt: tomorrowStart } },
+    include: { itemsOrder: { include: { product: { select: { name: true, imageUrl: true } } } } },
     orderBy: { createdAt: "desc" },
+    take: 3,
   });
 
   return orders.map(mapOrderWithItems);
@@ -364,26 +350,17 @@ function mapOrderWithItems(order: {
 async function getDeliveryZonesRaw(): Promise<DeliveryZone[]> {
   const row = await prisma.setting.findUnique({ where: { key: "deliveryZones" } });
   if (!row?.value) return [];
-  try {
-    return JSON.parse(row.value);
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(row.value); } catch { return []; }
 }
 
 async function getPickupWindowsRaw(): Promise<PickupWindow[]> {
   const row = await prisma.setting.findUnique({ where: { key: "pickupWindows" } });
   if (!row?.value) return [];
-  try {
-    return JSON.parse(row.value);
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(row.value); } catch { return []; }
 }
 
 let __orderCodeCounter = 0;
 function generateOrderCode(): string {
-  _codeCounter += 1;
   __orderCodeCounter += 1;
   const suffix = String(__orderCodeCounter).padStart(6, "0");
   return `MM-${suffix}`;

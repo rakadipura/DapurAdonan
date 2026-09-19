@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useCallback, useReducer, ReactNode } from "react";
-import type { CartItem, CustomerType, PickupWindow, DeliveryZone, Product } from "@/types";
+import type { CartItem, CustomerType } from "@/types";
+import type {} from "@/types";
 
 
 interface SessionState {
@@ -10,7 +11,7 @@ interface SessionState {
 }
 
 type SessionAction =
-  | { type: "ADD_CART"; product: Product; qty: number; notes?: string }
+  | { type: "ADD_CART"; product: { id: number; name: string; price: number; imageUrl: string | null; category?: { name: string } }; qty: number; notes?: string }
   | { type: "UPDATE_CART"; productId: number; qty: number }
   | { type: "REMOVE_CART"; productId: number }
   | { type: "SET_CONTACT"; contact: CustomerType | null }
@@ -75,12 +76,12 @@ function cartReducer(state: SessionState, action: SessionAction): SessionState {
 
 interface SessionContextValue {
   state: SessionState;
-  addToCart: (product: Product, qty: number, notes?: string) => void;
+  addToCart: (product: { id: number; name: string; price: number; imageUrl: string | null; category?: { name: string } }, qty: number, notes?: string) => void;
   updateCartQty: (productId: number, qty: number) => void;
   removeFromCart: (productId: number) => void;
   setContact: (contact: CustomerType | null) => void;
   clearCart: () => void;
-  total: number;
+  totalAmount: number;
   itemCount: number;
 }
 
@@ -90,7 +91,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { cart: [], contact: null });
 
   const addToCart = useCallback(
-    (product: Product, qty: number, notes?: string) => {
+    (product: { id: number; name: string; price: number; imageUrl: string | null; category?: { name: string } }, qty: number, notes?: string) => {
       dispatch({ type: "ADD_CART", product, qty, notes });
     },
     [],
@@ -121,13 +122,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "CLEAR_CART" });
   }, []);
 
-  const total = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const totalPrice = total;
+  const totalAmount = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const itemCount = state.cart.reduce((sum, item) => sum + item.qty, 0);
 
   return (
     <SessionContext.Provider
-      value={{ state, addToCart, updateCartQty, removeFromCart, setContact, clearCart, total, itemCount }}
+      value={{ state, addToCart, updateCartQty, removeFromCart, setContact, clearCart, totalAmount, itemCount }}
     >
       {children}
     </SessionContext.Provider>

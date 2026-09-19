@@ -1,0 +1,11 @@
+
+> toko-mini-moni-app@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.5 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.18.216:3001
+- Environments: .env.local
+✓ Ready in 413ms
+✓ Running next.config.ts took 17ms
+

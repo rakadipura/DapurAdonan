@@ -1,13 +1,17 @@
-import { PrismaClient } from "@prisma/client";
+// Thin type-only helpers so other modules can import Prisma types without importing
+// the runtime client at build time.
+export type { PrismaClient, Prisma } from "@prisma/client";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
-
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+declare global {
+  // eslint-disable-next-line no-var
+  var __tmmPrisma: ReturnType<typeof getPrismaClient> | undefined;
 }
 
-export default prisma;
+function getPrismaClient() {
+  const { PrismaClient } = require("@prisma/client");
+  return new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
+}
+
+export const prisma = globalThis.__tmmPrisma ?? (globalThis.__tmmPrisma = getPrismaClient());

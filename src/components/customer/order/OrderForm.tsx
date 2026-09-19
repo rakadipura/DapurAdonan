@@ -3,22 +3,11 @@
 import { useState, useTransition, useCallback } from "react";
 import { useSession } from "@/components/customer/SessionProvider";
 import type { Product, CustomerType, PickupWindow, DeliveryZone } from "@/types";
+
 import { formatRupiah } from "@/lib/money";
 
-import { useRouter } from "next/navigation";
-
 interface OrderFormProps {
-  products: Array<{
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    price: number;
-    imageUrl: string | null;
-    dailyStock: number | null;
-    isAvailable: boolean;
-    category: { name: string; slug: string };
-  }>;
+  products: Product[];
   categories: Array<{ id: number; name: string; slug: string }>;
   settings: {
     pickupWindows: PickupWindow[];
@@ -31,22 +20,15 @@ interface OrderFormProps {
 
 export function OrderForm({
   products,
-  categories,
   settings,
   featuredOrders = [],
 }: OrderFormProps) {
-  const router = useRouter();
-  const { state, addToCart, updateCartQty, removeFromCart, setContact, clearCart, total, itemCount } = useSession();
+  const { state, addToCart, updateCartQty, removeFromCart, clearCart, totalAmount, itemCount } = useSession();
   const [step, setStep] = useState<"cart" | "checkout">("cart");
   const [isSubmitting, startTransition] = useTransition();
   const [orderError, setOrderError] = useState<string | null>(null);
-  const [orderSuccess, setOrderSuccess] = useState<{ code: string; phone: string } | null>(null);
 
-  const [contact, setContactLocal] = useState<CustomerType>({
-    name: "",
-    phone: "",
-    email: "",
-  });
+  const [contact, setContactLocal] = useState<CustomerType>({ name: "", phone: "", email: "" });
   const [orderType, setOrderType] = useState<"PICKUP" | "DELIVERY">("PICKUP");
   const [pickupDate, setPickupDate] = useState("");
   const [pickupWindow, setPickupWindow] = useState("");
@@ -55,9 +37,7 @@ export function OrderForm({
   const [paymentMethod, setPaymentMethod] = useState<"TRANSFER" | "EWALLET" | "CASH">("CASH");
   const [notes, setNotes] = useState("");
 
-  const featuredOrdersList = featuredOrders;
-
-  const selectedProduct = products.find((p) => p.id === state.cart[0]?.productId);
+  const availableWindows = settings.pickupWindows;
 
   const handlePlaceOrder = useCallback(() => {
     setOrderError(null);
@@ -94,19 +74,15 @@ export function OrderForm({
           return;
         }
 
-        setOrderSuccess({ code: data.order.code, phone: data.order.customerPhone });
         clearCart();
         setStep("cart");
 
-        // Redirect to success page
-        window.location.href = data.redirectUrl;
+        window.location.href = data.redirectUrl as string;
       } catch (err) {
         setOrderError("Terjadi kesalahan. Coba lagi.");
       }
     });
   }, [state.cart, contact, orderType, pickupDate, pickupWindow, deliveryAddress, deliveryZone, paymentMethod, notes, clearCart]);
-
-  const availableWindows = settings.pickupWindows;
 
   return (
     <div className="rounded-2xl border border-[#efe2c7] bg-white p-6 shadow-md">
@@ -118,7 +94,7 @@ export function OrderForm({
             <p className="text-sm text-[#5a4a3a]">
               {state.cart.length === 0
                 ? "Keranjang masih kosong"
-                : `${itemCount} item · ${formatRupiah(total)}`}
+                : `${itemCount} item · ${formatRupiah(totalAmount)}`}
             </p>
           </div>
           {state.cart.length > 0 && (
@@ -173,7 +149,7 @@ export function OrderForm({
             ))}
             <div className="flex justify-end pt-2 text-right">
               <span className="text-base font-bold text-[#6b4a2b]">
-                Total: {formatRupiah(total)}
+                Total: {formatRupiah(totalAmount)}
               </span>
             </div>
           </div>
@@ -359,7 +335,7 @@ export function OrderForm({
             disabled={isSubmitting || contact.name === "" || contact.phone === "" || (orderType === "PICKUP" && (!pickupDate || !pickupWindow)) || (orderType === "DELIVERY" && (!deliveryAddress || !deliveryZone))}
             className="w-full rounded-lg border-0 bg-[#A0522D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8b4513] disabled:cursor-not-allowed disabled:bg-[#d9b38c]"
           >
-            {isSubmitting ? "Memproses…" : `Pesan Sekarang · ${formatRupiah(total)}`}
+            {isSubmitting ? "Memproses…" : `Pesan Sekarang · ${formatRupiah(totalAmount)}`}
           </button>
         </div>
       )}
@@ -372,11 +348,11 @@ export function OrderForm({
       )}
 
       {/* Featured recent orders (decorative) */}
-      {featuredOrdersList.length > 0 && (
+      {featuredOrders.length > 0 && (
         <div className="mt-6 rounded-lg border border-[#efe2c7] bg-[#FFF6E6] p-3 text-xs text-[#5a4a3a]">
           <p className="font-medium text-[#6b4a2b]">Pesanan hari ini:</p>
           <ul className="mt-1 space-y-0.5">
-            {featuredOrdersList.map((o) => (
+            {featuredOrders.map((o) => (
               <li key={o.code} className="flex justify-between">
                 <span>#{o.code} — {o.customerName}</span>
                 <span className="text-[#A0522D] font-medium">{formatRupiah(o.total)}</span>

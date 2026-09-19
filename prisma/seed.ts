@@ -68,17 +68,17 @@ async function main() {
 
   // ---- Products (sample catalog) ----
   const sampleProducts: Prisma.ProductCreateInput[] = [
-    { name: "Ronde Kue Coklat", slug: "ronde-kue-coklat", description: "Ronde kue tekstural lembut dengan taburan coklat yang manis dan gurih.", price: 25000, categoryId: categories[0].id, imageUrl: "/images/ronde-coklat.jpg", dailyStock: 30 },
-    { name: "Ronde Kue Keju", slug: "ronde-kue-keju", description: "Ronde kue dengan sentuhan keju parut yang gurih.", price: 27000, categoryId: categories[0].id, imageUrl: "/images/ronde-keju.jpg", dailyStock: 25 },
-    { name: "Kue Kering Pandan Green", slug: "kue-kering-pandan-green", description: "Kue kering pandan yang wangi dan renyah.", price: 18000, categoryId: categories[1].id, imageUrl: "/images/kue-kering-pandan.jpg", dailyStock: 50 },
-    { name: "Kue Kering Sesame", slug: "kue-kering-sesame", description: "Kue kering sesame yang gurih dan crunchy.", price: 18000, categoryId: categories[1].id, imageUrl: "/images/kue-kering-sesame.jpg", dailyStock: 50 },
-    { name: "Kue Kering Talam", slug: "kue-kering-talam", description: "Kue kering berlapis pisang, krim, dan lik Banana.", price: 22000, categoryId: categories[1].id, imageUrl: "/images/kue-kering-talam.jpg", dailyStock: 30 },
-    { name: "Kue Lempeng Tumpeng", slug: "kue-lempeng-tumpeng", description: "Kue lempeng manis berwarna warni.", price: 15000, categoryId: categories[2].id, imageUrl: "/images/kue-lempeng.jpg", dailyStock: 40 },
-    { name: "Roti Croissant", slug: "roti-croissant", description: "Croissant tepung lembut dengan lapisan buttery yang berlapis.", price: 25000, categoryId: categories[3].id, imageUrl: "/images/roti-croissant.jpg", dailyStock: 20 },
-    { name: "Roti Bolu Coklat", slug: "roti-bolu-coklat", description: "Roti bolu moist dengan cita rasa coklat yang dalam.", price: 30000, categoryId: categories[3].id, imageUrl: "/images/roti-bolu-coklat.jpg", dailyStock: 15 },
-    { name: "Es Teh Manis", slug: "es-teh-manis", description: "Teh manis segar ditambahkan es.", price: 8000, categoryId: categories[4].id, imageUrl: "/images/es-teh-manis.jpg", dailyStock: null },
-    { name: "Es Kopi Susu", slug: "es-kopi-susu", description: "Kopi susu dengan es batu.", price: 15000, categoryId: categories[4].id, imageUrl: "/images/es-kopi-susu.jpg", dailyStock: null },
-    { name: "Es Jeruk Peras", slug: "es-jeruk-peras", description: "Jeruk segar perasan alami.", price: 12000, categoryId: categories[4].id, imageUrl: "/images/es-jeruk.jpg", dailyStock: null },
+    { name: "Ronde Kue Coklat", slug: "ronde-kue-coklat", description: "Ronde kue tekstural lembut dengan taburan coklat yang manis dan gurih.", price: 25000,        category: { connect: { id: categories[0].id } }, imageUrl: "/images/ronde-coklat.jpg", dailyStock: 30 },
+    { name: "Ronde Kue Keju", slug: "ronde-kue-keju", description: "Ronde kue dengan sentuhan keju parut yang gurih.", price: 27000,        category: { connect: { id: categories[0].id } }, imageUrl: "/images/ronde-keju.jpg", dailyStock: 25 },
+    { name: "Kue Kering Pandan Green", slug: "kue-kering-pandan-green", description: "Kue kering pandan yang wangi dan renyah.", price: 18000,        category: { connect: { id: categories[1].id } }, imageUrl: "/images/kue-kering-pandan.jpg", dailyStock: 50 },
+    { name: "Kue Kering Sesame", slug: "kue-kering-sesame", description: "Kue kering sesame yang gurih dan crunchy.", price: 18000,        category: { connect: { id: categories[1].id } }, imageUrl: "/images/kue-kering-sesame.jpg", dailyStock: 50 },
+    { name: "Kue Kering Talam", slug: "kue-kering-talam", description: "Kue kering berlapis pisang, krim, dan lik Banana.", price: 22000,        category: { connect: { id: categories[1].id } }, imageUrl: "/images/kue-kering-talam.jpg", dailyStock: 30 },
+    { name: "Kue Lempeng Tumpeng", slug: "kue-lempeng-tumpeng", description: "Kue lempeng manis berwarna warni.", price: 15000,        category: { connect: { id: categories[2].id } }, imageUrl: "/images/kue-lempeng.jpg", dailyStock: 40 },
+    { name: "Roti Croissant", slug: "roti-croissant", description: "Croissant tepung lembut dengan lapisan buttery yang berlapis.", price: 25000,        category: { connect: { id: categories[3].id } }, imageUrl: "/images/roti-croissant.jpg", dailyStock: 20 },
+    { name: "Roti Bolu Coklat", slug: "roti-bolu-coklat", description: "Roti bolu moist dengan cita rasa coklat yang dalam.", price: 30000,        category: { connect: { id: categories[3].id } }, imageUrl: "/images/roti-bolu-coklat.jpg", dailyStock: 15 },
+    { name: "Es Teh Manis", slug: "es-teh-manis", description: "Teh manis segar ditambahkan es.", price: 8000,        category: { connect: { id: categories[4].id } }, imageUrl: "/images/es-teh-manis.jpg", dailyStock: null },
+    { name: "Es Kopi Susu", slug: "es-kopi-susu", description: "Kopi susu dengan es batu.", price: 15000,        category: { connect: { id: categories[4].id } }, imageUrl: "/images/es-kopi-susu.jpg", dailyStock: null },
+    { name: "Es Jeruk Peras", slug: "es-jeruk-peras", description: "Jeruk segar perasan alami.", price: 12000,        category: { connect: { id: categories[4].id } }, imageUrl: "/images/es-jeruk.jpg", dailyStock: null },
   ];
 
   const products = await Promise.all(
