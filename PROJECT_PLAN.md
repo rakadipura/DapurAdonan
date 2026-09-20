@@ -110,7 +110,7 @@
 | Lint: `<a>` → `<Link>` | ✅ Done | 6 files |
 | Lint: `useEffect` setState | ✅ Done | 6 admin panels with useRef |
 | Lint: `require()` → `import` | ✅ Done | db.ts |
-| CI workflow | ⏳ Next | |
-| Order history | ⏳ | |
+| CI workflow | ✅ Done | .github/workflows/ci.yml, ci-pr.yml |
+| Order history | ⏳ Next | |
 | Payment upload | ⏳ | |
 | WhatsApp links | ⏳ | |
