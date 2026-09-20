@@ -61,6 +61,16 @@ export default function HomePage() {
             <p className="mt-1 text-sm text-[#5a4a3a]">Cek kode + nomor telepon</p>
             <p className="text-xs text-[#5a4a3a]">/order/status</p>
           </div>
+          <div className="rounded-xl border border-[#efe2c7] bg-white p-4 text-left">
+            <p className="text-sm font-semibold text-[#6b4a2b]">Riwayat Pesanan</p>
+            <p className="mt-1 text-sm text-[#5a4a3a]">Lihat semua pesanan Anda</p>
+            <Link
+              href="/account/orders"
+              className="mt-2 inline-block text-xs font-medium text-[#A0522D] underline underline-offset-2 hover:text-[#8b4513]"
+            >
+              Masuk ke riwayat →
+            </Link>
+          </div>
         </div>
 
         {/* Footer */}
