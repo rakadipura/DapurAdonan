@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCustomerFacingSettings } from "@/lib/settings";
 import { SessionProvider } from "@/components/customer/SessionProvider";
@@ -61,21 +62,21 @@ export default async function MenuPage() {
         {/* Header */}
         <header className="sticky top-0 z-30 bg-[#fffaf0]/95 backdrop-blur border-b border-[#efe2c7]">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-            <a href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <span className="text-xl font-semibold tracking-tight text-[#6b4a2b]">
                 Toko Mini Moni
               </span>
-            </a>
+            </Link>
             <nav className="flex gap-4 text-sm font-medium text-[#6b4a2b]">
-              <a href="/menu" className="hover:text-[#A0522D] underline underline-offset-2">
+              <Link href="/menu" className="hover:text-[#A0522D] underline underline-offset-2">
                 Menu
-              </a>
-              <a href="/booking" className="hover:text-[#A0522D] underline underline-offset-2">
+              </Link>
+              <Link href="/booking" className="hover:text-[#A0522D] underline underline-offset-2">
                 Booking
-              </a>
-              <a href="/#kontak" className="hover:text-[#A0522D] underline underline-offset-2">
+              </Link>
+              <Link href="/#kontak" className="hover:text-[#A0522D] underline underline-offset-2">
                 Kontak
-              </a>
+              </Link>
             </nav>
           </div>
         </header>

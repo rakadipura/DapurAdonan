@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,24 +92,28 @@ export function SettingsPanel() {
   const [formValue, setFormValue] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mountedRef = useRef(true);
 
   const loadSettings = useCallback(async () => {
+    if (!mountedRef.current) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/admin/settings");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memuat pengaturan");
-      setSettings(data.settings);
+      if (mountedRef.current) setSettings(data.settings);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat pengaturan");
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Gagal memuat pengaturan");
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     loadSettings();
+    return () => { mountedRef.current = false; };
   }, [loadSettings]);
 
   const validateForm = (key: string, value: string): boolean => {

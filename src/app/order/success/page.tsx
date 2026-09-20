@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getOrder } from "@/lib/orders";
 import { getBooking } from "@/lib/bookings";
 import { formatRupiah } from "@/lib/money";
@@ -28,9 +29,9 @@ export default async function OrderSuccessPage({
       <div className="mx-auto max-w-2xl">
         {/* Header */}
         <header className="mb-8 text-center">
-          <a href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
             ← Kembali ke Toko Mini Moni
-          </a>
+          </Link>
         </header>
 
         {(!code || !phone) ? (
@@ -46,12 +47,12 @@ export default async function OrderSuccessPage({
             <p className="mt-2 text-sm text-[#5a4a3a]">
               Kode atau nomor telepon tidak cocok. Coba lagi atau hubungi kami.
             </p>
-            <a
+            <Link
               href="/"
               className="mt-4 inline-flex items-center justify-center rounded-xl border border-[#A0522D] bg-white px-6 py-3 text-sm font-semibold text-[#6b4a2b] shadow-sm transition hover:border-[#8b4513]"
             >
               Kembali ke Menu
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="space-y-6">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, useCallback } from "react";
+import { useEffect, useState, useTransition, useCallback, useRef } from "react";
 import { formatRupiah } from "@/lib/money";
 
 type OrderStatus = "PENDING" | "CONFIRMED" | "BAKING" | "READY" | "COMPLETED" | "CANCELLED";
@@ -46,8 +46,10 @@ export function OrdersPanel() {
   const [error, setError] = useState<string | null>(null);
   const [pendingCode, setPendingCode] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const mountedRef = useRef(true);
 
   const load = useCallback(() => {
+    if (!mountedRef.current) return;
     setIsLoading(true);
     setError(null);
     const params = new URLSearchParams({ scope });
@@ -57,15 +59,23 @@ export function OrdersPanel() {
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Gagal memuat pesanan");
-        setOrders(data.orders);
-        setStats(data.stats);
+        if (mountedRef.current) {
+          setOrders(data.orders);
+          setStats(data.stats);
+        }
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setIsLoading(false));
+      .catch((err) => {
+        if (mountedRef.current) setError(err.message);
+      })
+      .finally(() => {
+        if (mountedRef.current) setIsLoading(false);
+      });
   }, [scope, statusFilter]);
 
   useEffect(() => {
+    mountedRef.current = true;
     load();
+    return () => { mountedRef.current = false; };
   }, [load]);
 
   const handleStatusChange = (code: string, status: OrderStatus) => {

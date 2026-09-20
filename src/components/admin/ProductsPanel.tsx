@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,35 +103,40 @@ export function ProductsPanel() {
   const [formData, setFormData] = useState<ProductFormData>(emptyFormData);
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof ProductFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mountedRef = useRef(true);
 
   const loadProducts = useCallback(async () => {
+    if (!mountedRef.current) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/admin/products");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memuat produk");
-      setProducts(data.products);
+      if (mountedRef.current) setProducts(data.products);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat produk");
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Gagal memuat produk");
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) setIsLoading(false);
     }
   }, []);
 
   const loadCategories = useCallback(async () => {
+    if (!mountedRef.current) return;
     try {
       const res = await fetch("/api/admin/categories");
       const data = await res.json();
-      if (res.ok) setCategories(data.categories);
+      if (res.ok && mountedRef.current) setCategories(data.categories);
     } catch {
       // ignore
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     loadProducts();
     loadCategories();
+    return () => { mountedRef.current = false; };
   }, [loadProducts, loadCategories]);
 
   const filteredProducts = products.filter((p) => {

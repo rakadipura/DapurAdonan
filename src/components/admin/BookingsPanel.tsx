@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, useCallback } from "react";
+import { useEffect, useState, useTransition, useCallback, useRef } from "react";
 
 type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "RESCHEDULED" | "NO_SHOW" | "COMPLETED";
 
@@ -47,8 +47,10 @@ export function BookingsPanel() {
   const [error, setError] = useState<string | null>(null);
   const [pendingCode, setPendingCode] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const mountedRef = useRef(true);
 
   const load = useCallback(() => {
+    if (!mountedRef.current) return;
     setIsLoading(true);
     setError(null);
     const params = new URLSearchParams({ scope });
@@ -58,15 +60,23 @@ export function BookingsPanel() {
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Gagal memuat booking");
-        setBookings(data.bookings);
-        setStats(data.stats);
+        if (mountedRef.current) {
+          setBookings(data.bookings);
+          setStats(data.stats);
+        }
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setIsLoading(false));
+      .catch((err) => {
+        if (mountedRef.current) setError(err.message);
+      })
+      .finally(() => {
+        if (mountedRef.current) setIsLoading(false);
+      });
   }, [scope, statusFilter]);
 
   useEffect(() => {
+    mountedRef.current = true;
     load();
+    return () => { mountedRef.current = false; };
   }, [load]);
 
   const handleStatusChange = (code: string, status: BookingStatus) => {

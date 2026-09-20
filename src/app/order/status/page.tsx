@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getOrder } from "@/lib/orders";
 import { getBooking } from "@/lib/bookings";
 import { formatRupiah } from "@/lib/money";
@@ -38,9 +39,9 @@ export default async function StatusPage({
     <div className="min-h-screen bg-[#fffaf0] px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-2xl">
         <header className="mb-8">
-          <a href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
             ← Kembali ke Toko Mini Moni
-          </a>
+          </Link>
           <h1 className="mt-4 text-2xl font-bold text-[#6b4a2b]">Cek Status</h1>
           <p className="mt-1 text-sm text-[#5a4a3a]">
             Masukkan kode referensi dan nomor telepon untuk melihat status.

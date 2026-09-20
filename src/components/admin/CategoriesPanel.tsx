@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,24 +44,28 @@ export function CategoriesPanel() {
   const [formData, setFormData] = useState<CategoryFormData>(emptyFormData);
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof CategoryFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mountedRef = useRef(true);
 
   const loadCategories = useCallback(async () => {
+    if (!mountedRef.current) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/admin/categories");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memuat kategori");
-      setCategories(data.categories);
+      if (mountedRef.current) setCategories(data.categories);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat kategori");
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Gagal memuat kategori");
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     loadCategories();
+    return () => { mountedRef.current = false; };
   }, [loadCategories]);
 
   const validateForm = (data: CategoryFormData): boolean => {

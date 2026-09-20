@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,24 +46,28 @@ export function SlotsPanel() {
   const [formData, setFormData] = useState<SlotFormData>(emptyFormData);
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof SlotFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mountedRef = useRef(true);
 
   const loadSlots = useCallback(async () => {
+    if (!mountedRef.current) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/admin/slots");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memuat jadwal");
-      setSlots(data.slots);
+      if (mountedRef.current) setSlots(data.slots);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat jadwal");
+      if (mountedRef.current) setError(err instanceof Error ? err.message : "Gagal memuat jadwal");
     } finally {
-      setIsLoading(false);
+      if (mountedRef.current) setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     loadSlots();
+    return () => { mountedRef.current = false; };
   }, [loadSlots]);
 
   const validateForm = (data: SlotFormData): boolean => {

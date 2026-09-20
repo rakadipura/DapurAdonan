@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getAvailableSlots, getBookingDateOptions } from "@/lib/bookings";
 import { getMaxPartySize, getBookingLeadHours, formatDateYMD, formatDateLong } from "@/lib/settings";
@@ -61,9 +62,9 @@ export default async function BookingPage() {
         <div className="mx-auto max-w-3xl">
           {/* Header */}
           <header className="mb-8">
-            <a href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
               ← Kembali ke Toko Mini Moni
-            </a>
+            </Link>
             <h1 className="mt-4 text-3xl font-bold text-[#6b4a2b]">Booking Meja</h1>
             <p className="mt-2 text-base text-[#5a4a3a]">
               Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni.
