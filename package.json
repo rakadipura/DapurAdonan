@@ -19,7 +19,8 @@
     "db:seed": "npx tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:test:setup": "npx tsx tests/setup-test-db.ts",
-    "db:test:cleanup": "npx tsx tests/setup-test-db.ts cleanup"
+    "db:test:cleanup": "npx tsx tests/setup-test-db.ts cleanup",
+    "db:ci:setup": "npx tsx tests/setup-ci-db.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

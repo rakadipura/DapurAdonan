@@ -6,41 +6,125 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  NODE_ENV: test
+
 jobs:
-  build:
+  lint-and-typecheck:
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: toko
-          POSTGRES_PASSWORD: toko
-          POSTGRES_DB: toko_mini_moni
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      DATABASE_URL: postgresql://toko:toko@localhost:5432/toko_mini_moni?schema=public
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: '20'
+          cache: 'npm'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
 
-      - run: npm run lint
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
-      - name: Push Prisma schema
-        run: npx prisma db push
+      - name: Run Lint
+        run: npm run lint
 
-      - run: npm run build
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run Unit Tests
+        run: npm run test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build
+        run: npm run build
+
+  # E2E tests require a running dev server and database
+  # Uncomment when ready to run E2E in CI
+  # e2e-tests:
+  #   name: E2E Tests
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
+  #
+  #     - name: Install dependencies
+  #       run: npm ci --legacy-peer-deps
+  #
+  #     - name: Install Playwright
+  #       run: npx playwright install --with-deps chromium
+  #
+  #     - name: Generate Prisma Client
+  #       run: npx prisma generate
+  #
+  #     - name: Setup Database
+  #       run: |
+  #         # Start PostgreSQL
+  #         sudo service postgresql start
+  #         # Run migrations
+  #         npx prisma migrate deploy
+  #         # Seed test data
+  #         npm run db:test:setup
+  #
+  #     - name: Build
+  #       run: npm run build
+  #
+  #     - name: Start Dev Server
+  #       run: npm run dev &
+  #       env:
+  #         PORT: 3000
+  #
+  #     - name: Wait for Server
+  #       run: sleep 10 && curl -f http://localhost:3000
+  #
+  #     - name: Run E2E Tests
+  #       run: npm run test:e2e
