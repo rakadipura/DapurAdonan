@@ -107,8 +107,10 @@
 | E2E tests | ✅ Written | Need to run |
 | Categories page | ✅ Done | |
 | Settings page | ✅ Done | |
-| Lint fixes | ⏳ Next | 18 errors (pre-existing patterns) |
-| CI workflow | ⏳ | |
+| Lint: `<a>` → `<Link>` | ✅ Done | 6 files |
+| Lint: `useEffect` setState | ✅ Done | 6 admin panels with useRef |
+| Lint: `require()` → `import` | ✅ Done | db.ts |
+| CI workflow | ⏳ Next | |
 | Order history | ⏳ | |
 | Payment upload | ⏳ | |
 | WhatsApp links | ⏳ | |
