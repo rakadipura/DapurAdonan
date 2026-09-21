@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#FDF6E3"/>
+  <path d="M80,300 L80,150 Q120,100 200,100 Q280,100 320,150 L320,300 Z" fill="#E8C58A" stroke="#D4A574" stroke-width="2"/>
+  <path d="M150,120 L150,160" stroke="#8B6B4A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M150,160 Q180,180 200,170" stroke="#8B6B4A" stroke-width="2" fill="none"/>
+  <text x="200" y="370" font-family="system-ui, sans-serif" font-size="16" fill="#8B6B4A" text-anchor="middle">Kue Lempeng</text>
+  <text x="200" y="390" font-family="system-ui, sans-serif" font-size="12" fill="#A08060" text-anchor="middle">400x400px</text>
+</svg>

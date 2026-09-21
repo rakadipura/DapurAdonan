@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#FDF6E3"/>
+  <circle cx="200" cy="180" r="70" fill="#FFB347" opacity="0.8"/>
+  <circle cx="175" cy="160" r="8" fill="#FF8C00"/>
+  <circle cx="225" cy="160" r="6" fill="#FF8C00"/>
+  <circle cx="200" cy="200" r="5" fill="#FF8C00"/>
+  <text x="200" y="370" font-family="system-ui, sans-serif" font-size="16" fill="#8B6B4A" text-anchor="middle">Es Jeruk Peras</text>
+  <text x="200" y="390" font-family="system-ui, sans-serif" font-size="12" fill="#A08060" text-anchor="middle">400x400px</text>
+</svg>

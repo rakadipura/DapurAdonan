@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#FDF6E3"/>
+  <ellipse cx="200" cy="280" rx="100" ry="40" fill="#E8C58A"/>
+  <rect x="100" y="240" width="200" height="80" fill="#E8C58A"/>
+  <ellipse cx="200" cy="240" rx="100" ry="20" fill="#E8C58A"/>
+  <ellipse cx="200" cy="180" rx="70" ry="35" fill="#FFF0E0" stroke="#E8B57A" stroke-width="2"/>
+  <rect x="130" y="145" width="140" height="70" fill="#FFF0E0"/>
+  <ellipse cx="200" cy="145" rx="70" ry="15" fill="#FFF0E0" stroke="#E8B57A" stroke-width="2"/>
+  <ellipse cx="200" cy="100" rx="40" ry="25" fill="#FFE0D0" stroke="#E8A56A" stroke-width="2"/>
+  <rect x="160" y="75" width="80" height="50" fill="#FFE0D0"/>
+  <ellipse cx="200" cy="75" rx="40" ry="10" fill="#FFE0D0" stroke="#E8A56A" stroke-width="2"/>
+  <circle cx="200" cy="65" r="8" fill="#FF6B6B"/>
+  <text x="200" y="370" font-family="system-ui, sans-serif" font-size="16" fill="#8B6B4A" text-anchor="middle">Kue Custom</text>
+  <text x="200" y="390" font-family="system-ui, sans-serif" font-size="12" fill="#A08060" text-anchor="middle">400x400px</text>
+</svg>
