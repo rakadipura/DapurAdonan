@@ -6,7 +6,7 @@
 - Local:         http://localhost:3000
 - Network:       http://192.168.1.151:3000
 - Environments: .env.local
-✓ Ready in 476ms
-✓ Running next.config.ts took 25ms
+✓ Ready in 530ms
+✓ Running next.config.ts took 211ms
 
- POST /api/bookings 201 in 664ms (next.js: 372ms, application-code: 292ms)
+ GET /booking 200 in 1568ms (next.js: 687ms, application-code: 881ms)

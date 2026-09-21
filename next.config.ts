@@ -1,7 +1,46 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Generate ETags for static assets
+  generateEtags: true,
+  
+  // Cache-Control headers
+  async headers() {
+    return [
+      {
+        // Static assets - long cache with immutable
+        source: "/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        // HTML pages - short cache with revalidation
+        source: "/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
+    ];
+  },
+  
+  // Ensure build ID changes on each deployment
+  generateBuildId: async () => {
+    // Use git commit hash or timestamp for unique build ID
+    const { execSync } = require("child_process");
+    try {
+      const hash = execSync("git rev-parse --short HEAD").toString().trim();
+      return hash;
+    } catch {
+      return Date.now().toString();
+    }
+  },
 };
 
 export default nextConfig;
