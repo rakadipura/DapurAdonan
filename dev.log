@@ -6,19 +6,19 @@
 - Local:         http://localhost:3000
 - Network:       http://192.168.1.151:3000
 - Environments: .env.local
-✓ Ready in 379ms
-✓ Running next.config.ts took 27ms
+✓ Ready in 384ms
+✓ Running next.config.ts took 20ms
 
- GET /booking 200 in 683ms (next.js: 436ms, application-code: 246ms)
- POST /api/bookings 201 in 1556ms (next.js: 439ms, application-code: 1118ms)
- POST /api/bookings 201 in 202ms (next.js: 88ms, application-code: 113ms)
- POST /api/bookings 201 in 146ms (next.js: 32ms, application-code: 114ms)
- POST /api/bookings 400 in 39ms (next.js: 8ms, application-code: 30ms)
- POST /api/bookings 400 in 16ms (next.js: 9ms, application-code: 7ms)
+ GET /booking 200 in 867ms (next.js: 254ms, application-code: 613ms)
+ POST /api/bookings 400 in 124ms (next.js: 96ms, application-code: 27ms)
+ POST /api/bookings 400 in 25ms (next.js: 11ms, application-code: 14ms)
+ POST /api/bookings 400 in 15ms (next.js: 6ms, application-code: 9ms)
+ POST /api/bookings 400 in 53ms (next.js: 21ms, application-code: 32ms)
+ POST /api/bookings 400 in 22ms (next.js: 11ms, application-code: 11ms)
 POST /api/bookings failed: Error: Jadwal penuh; hanya tersisa 0 orang
     at <unknown> (src/lib/bookings.ts:135:13)
     at async createBooking (src/lib/bookings.ts:122:18)
-    at async POST (src/app/api/bookings/route.ts:36:21)
+    at async POST (src/app/api/bookings/route.ts:96:21)
   133 |
   134 |     if (available < partySize) {
 > 135 |       throw new Error(`Jadwal penuh; hanya tersisa ${available} orang`);
@@ -26,9 +26,6 @@ POST /api/bookings failed: Error: Jadwal penuh; hanya tersisa 0 orang
   136 |     }
   137 |
   138 |     const bookingCode = generateBookingCode();
- POST /api/bookings 400 in 278ms (next.js: 11ms, application-code: 267ms)
- GET /api/bookings/slots?date=2026-09-27 200 in 96ms (next.js: 66ms, application-code: 30ms)
- POST /api/bookings 201 in 75ms (next.js: 16ms, application-code: 58ms)
- POST /api/bookings 201 in 51ms (next.js: 19ms, application-code: 32ms)
- POST /api/bookings 201 in 27ms (next.js: 5ms, application-code: 22ms)
- POST /api/bookings 201 in 21ms (next.js: 6ms, application-code: 15ms)
+ POST /api/bookings 400 in 244ms (next.js: 6ms, application-code: 237ms)
+ GET /api/bookings/slots?date=2026-09-27 200 in 96ms (next.js: 75ms, application-code: 21ms)
+ POST /api/bookings 201 in 69ms (next.js: 14ms, application-code: 56ms)
