@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { CustomerType } from "@/types";
 import { formatRupiah } from "@/lib/money";
 import { isValidPhone } from "@/lib/regex";
+import { ChevronLeftIcon, Loader2Icon } from "lucide-react";
 
 interface Slot {
   id: number;
@@ -12,6 +13,10 @@ interface Slot {
   startTime: string;
   endTime: string;
   capacity: number;
+}
+
+interface SlotAvailability extends Slot {
+  remaining: number;
 }
 
 interface BookingFlowProps {
@@ -38,18 +43,30 @@ export function BookingFlow({
   slots,
   dateOptions,
   maxPartySize,
+  leadHours,
   defaultDate,
 }: BookingFlowProps) {
   const router = useRouter();
   const [step, setStep] = useState<"date" | "details" | "confirm">("date");
   const [selectedDate, setSelectedDate] = useState(defaultDate);
-  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<SlotAvailability | null>(null);
   const [partySize, setPartySize] = useState(2);
   const [contact, setContactLocal] = useState<CustomerType>({ name: "", phone: "", email: "" });
-  const [availableSlots, setAvailableSlots] = useState<Slot[]>(slots);
+  const [availableSlots, setAvailableSlots] = useState<SlotAvailability[]>([]);
   const [isSubmitting, startTransition] = useTransition();
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ code: string; phone: string } | null>(null);
+
+  // Initialize availableSlots from props on mount
+  useEffect(() => {
+    setAvailableSlots(
+      slots.map((s) => ({
+        ...s,
+        remaining: s.capacity,
+      }))
+    );
+  }, [slots]);
 
   const handleDateChange = async (date: string) => {
     setSelectedDate(date);
@@ -57,6 +74,7 @@ export function BookingFlow({
     setStep("details");
     setError(null);
     setSuccess(null);
+    setIsLoadingSlots(true);
     try {
       const res = await fetch(`/api/bookings/slots?date=${date}`);
       const data = await res.json();
@@ -64,17 +82,51 @@ export function BookingFlow({
         setAvailableSlots(data.slots);
       }
     } catch {
-      setAvailableSlots(slots);
+      setAvailableSlots(
+        slots.map((s) => ({
+          ...s,
+          remaining: s.capacity,
+        }))
+      );
+    } finally {
+      setIsLoadingSlots(false);
     }
   };
 
+  const goBack = () => {
+    if (step === "details") setStep("date");
+    else if (step === "confirm") setStep("details");
+  };
+
+  const isDateDisabled = (date: string) => {
+    const now = new Date();
+    const wibOffset = 7 * 60 * 60 * 1000;
+    const nowWIB = new Date(now.getTime() + wibOffset);
+    const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
+    const dateStart = new Date(date + "T00:00:00");
+    const diffHours = (dateStart.getTime() - nowWIB.getTime()) / (1000 * 60 * 60);
+    return diffHours < leadHours;
+  };
+
   const handleSubmit = () => {
+    if (!contact.name.trim()) {
+      setError("Nama wajib diisi");
+      return;
+    }
     if (!isValidPhone(contact.phone)) {
       setError("Nomor telepon tidak valid");
       return;
     }
     if (!selectedSlot) {
       setError("Pilih jadwal dahulu");
+      return;
+    }
+    if (selectedSlot.remaining < partySize) {
+      setError(`Hanya tersisa ${selectedSlot.remaining} kursi untuk jadwal ini`);
+      return;
+    }
+    if (isDateDisabled(selectedDate)) {
+      setError(`Booking minimal ${leadHours} jam sebelum jadwal`);
       return;
     }
 
@@ -87,6 +139,7 @@ export function BookingFlow({
           partySize,
           name: contact.name,
           phone: contact.phone,
+          email: contact.email || undefined,
         };
 
         const res = await fetch("/api/bookings", {
@@ -103,16 +156,12 @@ export function BookingFlow({
         }
 
         setSuccess({ code: data.booking.code, phone: data.booking.phone });
-        setStep("confirm");
-        window.location.href = data.redirectUrl;
+        router.push(data.redirectUrl);
       } catch (err) {
         setError("Terjadi kesalahan. Coba lagi.");
       }
     });
   };
-
-  const selectedSlotCapacity = selectedSlot?.capacity ?? 0;
-  const slotFull = selectedSlot && selectedSlot.capacity === 0;
 
   return (
     <div className="rounded-2xl border border-[#efe2c7] bg-white p-6 shadow-md">
@@ -141,26 +190,49 @@ export function BookingFlow({
         })}
       </div>
 
+      {/* Back button */}
+      {step !== "date" && (
+        <button
+          type="button"
+          onClick={goBack}
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-[#A0522D] hover:underline"
+        >
+          <ChevronLeftIcon className="h-4 w-4" />
+          Kembali
+        </button>
+      )}
+
       <div className="space-y-6">
         {/* Step 1: pick date */}
         {step === "date" && (
           <div>
             <h2 className="mb-3 text-lg font-semibold text-[#6b4a2b]">Pilih Tanggal</h2>
             <div className="grid grid-cols-2 gap-2">
-              {dateOptions.map((opt) => (
-                <button
-                  key={opt.date}
-                  type="button"
-                  onClick={() => handleDateChange(opt.date)}
-                  className={`rounded-xl border p-3 text-left transition ${
-                    selectedDate === opt.date
-                      ? "border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium"
-                      : "border-[#e6c98a] bg-white text-[#5a4a3a]"
-                  }`}
-                >
-                  <div className="text-sm font-medium">{opt.label}</div>
-                </button>
-              ))}
+              {dateOptions.map((opt) => {
+                const disabled = isDateDisabled(opt.date);
+                return (
+                  <button
+                    key={opt.date}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => handleDateChange(opt.date)}
+                    className={`rounded-xl border p-3 text-left transition ${
+                      selectedDate === opt.date
+                        ? "border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium"
+                        : disabled
+                        ? "border-[#e6c98a] bg-gray-50 text-[#5a4a3a] opacity-60 cursor-not-allowed"
+                        : "border-[#e6c98a] bg-white text-[#5a4a3a] hover:border-[#A0522D]"
+                    }`}
+                  >
+                    <div className="text-sm font-medium">{opt.label}</div>
+                    {disabled && (
+                      <div className="text-xs text-amber-600 mt-1">
+                        Minimal {leadHours} jam sebelum
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             {dateOptions.length === 0 && (
               <p className="mt-2 text-sm text-[#5a4a3a]">Belum ada tanggal tersedia.</p>
@@ -182,40 +254,51 @@ export function BookingFlow({
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium text-[#6b4a2b]">Waktu</label>
               <div className="grid grid-cols-1 gap-2">
-                {slots.map((slot) => {
-                  const disabled = slot.capacity === 0;
-                  return (
-                    <button
-                      key={slot.id}
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => {
-                        setSelectedSlot(slot);
-                        setStep("confirm");
-                      }}
-                      className={`rounded-lg border p-3 text-left transition ${
-                        selectedSlot?.id === slot.id
-                          ? "border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium"
-                          : disabled
-                          ? "border-[#e6c98a] bg-gray-50 text-[#5a4a3a] opacity-60"
-                          : "border-[#e6c98a] bg-white text-[#5a4a3a] hover:border-[#A0522D]"
-                      }`}
-                    >
-                      <div className="flex justify-between">
-                        <span>
-                          {slot.name} · {slot.startTime} – {slot.endTime}
-                        </span>
-                        <span className={`text-sm ${disabled ? "text-red-600" : "text-[#A0522D]"}`}>
-                          {disabled ? "Penuh" : `${slot.capacity} meja tersedia`}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
+                {isLoadingSlots ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2Icon className="h-6 w-6 animate-spin text-[#A0522D]" />
+                    <span className="ml-2 text-sm text-[#5a4a3a]">Memuat ketersediaan…</span>
+                  </div>
+                ) : (
+                  availableSlots.map((slot) => {
+                    const disabled = slot.remaining < 1 || slot.remaining < partySize;
+                    return (
+                      <button
+                        key={slot.id}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => {
+                          setSelectedSlot(slot);
+                          setStep("confirm");
+                        }}
+                        className={`rounded-lg border p-3 text-left transition ${
+                          selectedSlot?.id === slot.id
+                            ? "border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium"
+                            : disabled
+                            ? "border-[#e6c98a] bg-gray-50 text-[#5a4a3a] opacity-60 cursor-not-allowed"
+                            : "border-[#e6c98a] bg-white text-[#5a4a3a] hover:border-[#A0522D]"
+                        }`}
+                      >
+                        <div className="flex justify-between">
+                          <span>
+                            {slot.name} · {slot.startTime} – {slot.endTime}
+                          </span>
+                          <span className={`text-sm ${disabled ? "text-red-600" : "text-[#A0522D]"}`}>
+                            {disabled
+                              ? slot.remaining < 1
+                                ? "Penuh"
+                                : `Hanya ${slot.remaining} kursi`
+                              : `${slot.remaining} kursi tersedia`}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+                {availableSlots.length === 0 && !isLoadingSlots && (
+                  <p className="mt-2 text-sm text-[#5a4a3a]">Belum ada jadwal tersedia untuk tanggal ini.</p>
+                )}
               </div>
-              {slots.length === 0 && (
-                <p className="mt-2 text-sm text-[#5a4a3a]">Belum ada jadwal tersedia.</p>
-              )}
             </div>
 
             <div>
