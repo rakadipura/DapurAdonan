@@ -101,16 +101,11 @@
 
 | Task | Status | Notes |
 |------|--------|-------|
-| ProductsPanel | ✅ Done | |
-| SlotsPanel | ✅ Done | |
-| Unit tests | ✅ Done | 21 tests passing |
-| E2E tests | ✅ Written | Need to run |
-| Categories page | ✅ Done | |
-| Settings page | ✅ Done | |
-| Lint: `<a>` → `<Link>` | ✅ Done | 6 files |
-| Lint: `useEffect` setState | ✅ Done | 6 admin panels with useRef |
-| Lint: `require()` → `import` | ✅ Done | db.ts |
+| ProductsPanel, SlotsPanel, CategoriesPanel, SettingsPanel | ✅ Done | |
+| Unit tests (21) | ✅ Done | |
+| E2E test scenarios | ✅ Written | Need to run |
+| Lint fixes (`<Link>`, `useRef`, `import`) | ✅ Done | |
 | CI workflow | ✅ Done | .github/workflows/ci.yml, ci-pr.yml |
-| Order history | ⏳ Next | |
-| Payment upload | ⏳ | |
+| **Order history / My Account** | ✅ Done | /account/orders with phone lookup |
+| Payment upload | ⏳ Next | |
 | WhatsApp links | ⏳ | |
