@@ -123,6 +123,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
     const bookings = await tx.booking.findMany({
       where: {
         date: wibDate,
+        slotId,
         status: { notIn: ["CANCELLED", "NO_SHOW"] },
       },
       select: { partySize: true },
