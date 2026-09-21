@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { CustomerType } from "@/types";
 import { formatRupiah } from "@/lib/money";
-import { isValidPhone } from "@/lib/regex";
+import { isValidPhone, normalizePhone } from "@/lib/regex";
 import { ChevronLeftIcon, Loader2Icon } from "lucide-react";
 
 interface Slot {
@@ -138,7 +138,7 @@ export function BookingFlow({
           slotId: selectedSlot.id,
           partySize,
           name: contact.name,
-          phone: contact.phone,
+          phone: normalizePhone(contact.phone),
           email: contact.email || undefined,
         };
 
