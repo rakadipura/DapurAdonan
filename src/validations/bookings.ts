@@ -10,7 +10,7 @@ export const createBookingSchema = z
       .string()
       .trim()
       .min(1, "Nomor telepon wajib diisi")
-      .regex(/^(\+?62|0)8[0-9]{7,11}$/, "Format nomor telepon tidak valid"),
+      .regex(/^(\+?62|0)8[0-9]{6,11}$/, "Format nomor telepon tidak valid"),
     email: z.string().optional(),
   })
   .refine((data) => data.partySize >= 1 && data.partySize <= 8, {
