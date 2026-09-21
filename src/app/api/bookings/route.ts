@@ -4,15 +4,17 @@ import { createBookingSchema } from "@/validations/bookings";
 import { revalidatePath } from "next/cache";
 import { normalizePhone } from "@/lib/regex";
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    
+
     // Normalize phone before validation
     if (body.phone) {
       body.phone = normalizePhone(body.phone);
     }
-    
+
     const parsed = createBookingSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -22,7 +24,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const booking = await createBooking(parsed.data);
+    // Validate email format if provided
+    const email = parsed.data.email;
+    if (email && email !== "" && !emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Data tidak valid", details: { email: ["Format email tidak valid"] } },
+        { status: 400 },
+      );
+    }
+
+    const booking = await createBooking({
+      ...parsed.data,
+      email: email && email !== "" ? email : undefined,
+    });
     revalidatePath("/booking");
     return NextResponse.json(
       {
