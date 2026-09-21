@@ -136,7 +136,7 @@ export default async function MenuPage() {
             </p>
           </div>
 
-          {/* Categories tabs */}
+          {/* Categories tabs with images */}
           <div className="mb-6 flex flex-wrap gap-2">
             <a
               href="#"
@@ -144,12 +144,15 @@ export default async function MenuPage() {
             >
               Semua
             </a>
-            {categories.map((cat: { id: number; name: string; slug: string }) => (
+            {categories.map((cat: { id: number; name: string; slug: string; imageUrl: string | null }) => (
               <a
                 key={cat.id}
                 href={`/menu?category=${cat.slug}`}
-                className="rounded-full border border-[#e6c98a] bg-white px-4 py-1.5 text-sm font-medium text-[#6b4a2b] transition hover:border-[#A0522D]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#e6c98a] bg-white px-4 py-1.5 text-sm font-medium text-[#6b4a2b] transition hover:border-[#A0522D]"
               >
+                {cat.imageUrl && (
+                  <img src={cat.imageUrl} alt={cat.name} className="h-5 w-5 rounded-full object-cover" />
+                )}
                 {cat.name}
               </a>
             ))}

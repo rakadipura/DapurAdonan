@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <rect width="300" height="300" fill="#FDF6E3"/>
+  <!-- Bread loaf -->
+  <path d="M60,220 Q60,120 150,100 Q240,120 240,220 L240,260 L60,260 Z" fill="#E8C58A" stroke="#D4A574" stroke-width="2"/>
+  <path d="M60,220 Q150,100 240,220" stroke="#C4A06A" stroke-width="2" fill="none"/>
+  <g stroke="#D4A574" stroke-width="1" opacity="0.5">
+    <line x1="100" y1="130" x2="100" y2="260"/>
+    <line x1="140" y1="125" x2="140" y2="260"/>
+    <line x1="180" y1="120" x2="180" y2="260"/>
+    <line x1="220" y1="125" x2="220" y2="260"/>
+  </g>
+  <text x="150" y="270" font-family="system-ui, sans-serif" font-size="14" fill="#8B6B4A" text-anchor="middle">Roti</text>
+  <text x="150" y="285" font-family="system-ui, sans-serif" font-size="10" fill="#A08060" text-anchor="middle">300x300px</text>
+</svg>

@@ -82,7 +82,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" />
           ) : (
-            <div className="flex h-full items-center justify-center text-4xl text-[#e6c98a]">🎂</div>
+            <img src="/images/products/placeholder.svg" alt={product.name} className="h-full w-full object-cover" />
           )}
         </div>
         <div className="mt-3">
@@ -118,7 +118,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" />
           ) : (
-            <div className="flex h-full items-center justify-center text-4xl text-[#e6c98a]">🍰</div>
+            <img src="/images/products/placeholder.svg" alt={product.name} className="h-full w-full object-cover" />
           )}
         </div>
         <div className="mt-3">

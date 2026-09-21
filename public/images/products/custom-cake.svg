@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#FDF6E3"/>
+  <!-- 3-tier cake -->
+  <!-- Bottom tier -->
+  <ellipse cx="200" cy="320" rx="120" ry="50" fill="#FFF0E0" stroke="#E8C58A" stroke-width="2"/>
+  <rect x="80" y="270" width="240" height="100" fill="#FFF0E0"/>
+  <ellipse cx="200" cy="270" rx="120" ry="20" fill="#FFF0E0" stroke="#E8C58A" stroke-width="2"/>
+  <!-- Middle tier -->
+  <ellipse cx="200" cy="230" rx="80" ry="40" fill="#FFE0D0" stroke="#E8B57A" stroke-width="2"/>
+  <rect x="120" y="190" width="160" height="80" fill="#FFE0D0"/>
+  <ellipse cx="200" cy="190" rx="80" ry="15" fill="#FFE0D0" stroke="#E8B57A" stroke-width="2"/>
+  <!-- Top tier -->
+  <ellipse cx="200" cy="150" rx="45" ry="30" fill="#FFD0C0" stroke="#E8A56A" stroke-width="2"/>
+  <rect x="155" y="120" width="90" height="60" fill="#FFD0C0"/>
+  <ellipse cx="200" cy="120" rx="45" ry="10" fill="#FFD0C0" stroke="#E8A56A" stroke-width="2"/>
+  <!-- Decoration -->
+  <circle cx="200" cy="105" r="8" fill="#FF6B6B"/>
+  <ellipse cx="180" cy="115" rx="15" ry="8" fill="#4ECDC4"/>
+  <ellipse cx="220" cy="115" rx="15" ry="8" fill="#FFE66D"/>
+  <!-- Text on cake -->
+  <text x="200" y="220" font-family="system-ui, sans-serif" font-size="14" fill="#8B6B4A" text-anchor="middle" font-weight="bold">Selamat</text>
+  <text x="200" y="240" font-family="system-ui, sans-serif" font-size="14" fill="#8B6B4A" text-anchor="middle">Ulang Tahun</text>
+  <text x="200" y="370" font-family="system-ui, sans-serif" font-size="16" fill="#8B6B4A" text-anchor="middle">Custom Cake</text>
+  <text x="200" y="390" font-family="system-ui, sans-serif" font-size="12" fill="#A08060" text-anchor="middle">400x400px</text>
+</svg>

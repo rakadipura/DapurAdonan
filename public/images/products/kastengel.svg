@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#FDF6E3"/>
+  <!-- Kastengel sticks -->
+  <g fill="#E8C58A">
+    <rect x="80" y="100" width="50" height="180" rx="5"/>
+    <rect x="150" y="90" width="50" height="180" rx="5"/>
+    <rect x="220" y="100" width="50" height="180" rx="5"/>
+    <rect x="290" y="110" width="50" height="180" rx="5"/>
+  </g>
+  <!-- Cheese topping -->
+  <g fill="#F4D03F">
+    <rect x="85" y="105" width="40" height="30" rx="3"/>
+    <rect x="155" y="95" width="40" height="30" rx="3"/>
+    <rect x="225" y="105" width="40" height="30" rx="3"/>
+    <rect x="295" y="115" width="40" height="30" rx="3"/>
+  </g>
+  <text x="200" y="370" font-family="system-ui, sans-serif" font-size="16" fill="#8B6B4A" text-anchor="middle">Kastengel - Keju</text>
+  <text x="200" y="390" font-family="system-ui, sans-serif" font-size="12" fill="#A08060" text-anchor="middle">400x400px</text>
+</svg>

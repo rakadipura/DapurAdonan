@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <rect width="1200" height="600" fill="#FDF6E3"/>
+  <ellipse cx="600" cy="300" rx="200" ry="120" fill="#FCE9C8" opacity="0.5"/>
+  <ellipse cx="600" cy="300" rx="150" ry="90" fill="#F5E6C8" opacity="0.7"/>
+  <text x="600" y="280" font-family="system-ui, sans-serif" font-size="48" fill="#6B4A2B" text-anchor="middle" font-weight="bold">Toko Mini Moni</text>
+  <text x="600" y="330" font-family="system-ui, sans-serif" font-size="24" fill="#A0522D" text-anchor="middle">Kue, Roti & Jajanan Sehat</text>
+  <text x="600" y="370" font-family="system-ui, sans-serif" font-size="16" fill="#8B6B4A" text-anchor="middle">1200x600px - Hero Banner</text>
+</svg>

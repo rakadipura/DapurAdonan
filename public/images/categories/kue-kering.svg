@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <rect width="300" height="300" fill="#FDF6E3"/>
+  <!-- Assorted dry cookies -->
+  <g fill="#D4A574">
+    <circle cx="90" cy="90" r="25"/>
+    <circle cx="210" cy="90" r="25"/>
+    <circle cx="90" cy="210" r="25"/>
+    <circle cx="210" cy="210" r="25"/>
+  </g>
+  <g fill="#F4D03F">
+    <circle cx="90" cy="90" r="8"/>
+    <circle cx="210" cy="90" r="8"/>
+    <circle cx="90" cy="210" r="8"/>
+    <circle cx="210" cy="210" r="8"/>
+  </g>
+  <rect x="130" y="130" width="40" height="60" rx="3" fill="#E8C58A"/>
+  <rect x="135" y="135" width="30" height="15" rx="2" fill="#F4D03F"/>
+  <path d="M100,150 Q130,120 160,150" stroke="#C4A06A" stroke-width="2" fill="none"/>
+  <text x="150" y="270" font-family="system-ui, sans-serif" font-size="14" fill="#8B6B4A" text-anchor="middle">Kue Kering</text>
+  <text x="150" y="285" font-family="system-ui, sans-serif" font-size="10" fill="#A08060" text-anchor="middle">300x300px</text>
+</svg>
