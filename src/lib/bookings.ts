@@ -50,7 +50,7 @@ export interface BookingWithSlot {
 }
 
 export interface SlotAvailability {
-  slotId: number;
+  id: number;
   name: string;
   startTime: string;
   endTime: string;
@@ -80,7 +80,7 @@ export async function getAvailableSlots(date: string): Promise<SlotAvailability[
   }
 
   return slots.map((s: { id: number; name: string; startTime: string; endTime: string; capacity: number }) => ({
-    slotId: s.id,
+    id: s.id,
     name: s.name,
     startTime: s.startTime,
     endTime: s.endTime,
@@ -378,12 +378,12 @@ function mapBookingWithSlot(booking: {
   partySize: number;
   name: string;
   phone: string;
-  email?: string;
+  email: string | null;
   status: string;
-  cancelledAt?: Date;
-  cancelReason?: string;
-  rescheduledFromId?: number;
-  rescheduledAt?: Date;
+  cancelledAt: Date | null;
+  cancelReason: string | null;
+  rescheduledFromId: number | null;
+  rescheduledAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   noShowAt: Date | null;
@@ -397,12 +397,12 @@ function mapBookingWithSlot(booking: {
     partySize: booking.partySize,
     name: booking.name,
     phone: booking.phone,
-    email: booking.email,
+    email: booking.email || undefined,
     status: booking.status,
-    cancelledAt: booking.cancelledAt,
-    cancelReason: booking.cancelReason,
-    rescheduledFromId: booking.rescheduledFromId,
-    rescheduledAt: booking.rescheduledAt,
+    cancelledAt: booking.cancelledAt || undefined,
+    cancelReason: booking.cancelReason || undefined,
+    rescheduledFromId: booking.rescheduledFromId || undefined,
+    rescheduledAt: booking.rescheduledAt || undefined,
     createdAt: booking.createdAt,
     updatedAt: booking.updatedAt,
     noShowAt: booking.noShowAt,

@@ -15,62 +15,68 @@ async function main() {
   const categories = await Promise.all([
     prisma.category.upsert({
       where: { slug: "ronde-kue" },
-      update: {},
+      update: { imageUrl: "/images/categories/kue-kering.svg" },
       create: {
         name: "Ronde Kue",
         slug: "ronde-kue",
         sortOrder: 1,
         isVisible: true,
+        imageUrl: "/images/categories/kue-kering.svg",
       },
     }),
     prisma.category.upsert({
       where: { slug: "kue-kering" },
-      update: {},
+      update: { imageUrl: "/images/categories/kue-kering.svg" },
       create: {
         name: "Kue Kering",
         slug: "kue-kering",
         sortOrder: 2,
         isVisible: true,
+        imageUrl: "/images/categories/kue-kering.svg",
       },
     }),
     prisma.category.upsert({
       where: { slug: "kue-lempeng" },
-      update: {},
+      update: { imageUrl: "/images/categories/kue-kering.svg" },
       create: {
         name: "Kue Lempeng",
         slug: "kue-lempeng",
         sortOrder: 3,
         isVisible: true,
+        imageUrl: "/images/categories/kue-kering.svg",
       },
     }),
     prisma.category.upsert({
       where: { slug: "roti" },
-      update: {},
+      update: { imageUrl: "/images/categories/roti.svg" },
       create: {
         name: "Roti",
         slug: "roti",
         sortOrder: 4,
         isVisible: true,
+        imageUrl: "/images/categories/roti.svg",
       },
     }),
     prisma.category.upsert({
       where: { slug: "minuman" },
-      update: {},
+      update: { imageUrl: "/images/categories/minuman.svg" },
       create: {
         name: "Minuman",
         slug: "minuman",
         sortOrder: 5,
         isVisible: true,
+        imageUrl: "/images/categories/minuman.svg",
       },
     }),
     prisma.category.upsert({
       where: { slug: "kue-custom" },
-      update: {},
+      update: { imageUrl: "/images/categories/custom-cake.svg" },
       create: {
         name: "Kue Custom",
         slug: "kue-custom",
         sortOrder: 6,
         isVisible: true,
+        imageUrl: "/images/categories/custom-cake.svg",
       },
     }),
   ]);

@@ -219,7 +219,14 @@ export function CategoriesPanel() {
                   </td>
                   <td className="px-4 py-3">
                     {category.imageUrl ? (
-                      <img src={category.imageUrl} alt="" className="h-10 w-10 rounded object-cover" />
+                      <img
+                        src={category.imageUrl}
+                        alt=""
+                        className="h-10 w-10 rounded object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/categories/placeholder.svg";
+                        }}
+                      />
                     ) : (
                       <span className="text-xs text-[#5a4a3a]">-</span>
                     )}
@@ -263,7 +270,8 @@ export function CategoriesPanel() {
 
             <div>
               <Label htmlFor="imageUrl">URL Gambar</Label>
-              <Input id="imageUrl" type="url" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg" />
+              <Input id="imageUrl" type="url" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="/images/categories/minuman.svg" />
+              <p className="text-xs text-[#5a4a3a] mt-1">Gunakan path relatif (contoh: /images/categories/nama-file.svg) atau URL penuh</p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

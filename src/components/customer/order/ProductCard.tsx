@@ -80,7 +80,14 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="group rounded-xl border border-[#efe2c7] bg-white p-4 shadow-sm transition hover:border-[#A0522D] hover:shadow-md">
         <div className="aspect-square overflow-hidden rounded-lg bg-[#FCE9C8]">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="h-full w-full object-cover transition group-hover:scale-105"
+              onError={(e) => {
+                e.currentTarget.src = "/images/products/placeholder.svg";
+              }}
+            />
           ) : (
             <img src="/images/products/placeholder.svg" alt={product.name} className="h-full w-full object-cover" />
           )}
@@ -116,7 +123,14 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="group rounded-xl border border-[#efe2c7] bg-white p-4 shadow-sm transition hover:border-[#A0522D] hover:shadow-md">
         <div className="aspect-square overflow-hidden rounded-lg bg-[#FCE9C8]">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition group-hover:scale-105" />
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="h-full w-full object-cover transition group-hover:scale-105"
+              onError={(e) => {
+                e.currentTarget.src = "/images/products/placeholder.svg";
+              }}
+            />
           ) : (
             <img src="/images/products/placeholder.svg" alt={product.name} className="h-full w-full object-cover" />
           )}

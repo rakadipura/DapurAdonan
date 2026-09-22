@@ -429,7 +429,8 @@ export function ProductsPanel() {
               </div>
               <div>
                 <Label htmlFor="imageUrl">URL Gambar</Label>
-                <Input id="imageUrl" type="url" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg" />
+                <Input id="imageUrl" type="url" value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder="/images/products/nastar.svg" />
+                <p className="text-xs text-[#5a4a3a] mt-1">Gunakan path relatif (contoh: /images/products/nama-file.jpg) atau URL penuh</p>
               </div>
               <div>
                 <Label htmlFor="dailyStock">Stok Harian</Label>

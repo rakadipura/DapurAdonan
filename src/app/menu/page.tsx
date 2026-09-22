@@ -151,7 +151,11 @@ export default async function MenuPage() {
                 className="inline-flex items-center gap-1.5 rounded-full border border-[#e6c98a] bg-white px-4 py-1.5 text-sm font-medium text-[#6b4a2b] transition hover:border-[#A0522D]"
               >
                 {cat.imageUrl && (
-                  <img src={cat.imageUrl} alt={cat.name} className="h-5 w-5 rounded-full object-cover" />
+                  <img
+                    src={cat.imageUrl}
+                    alt={cat.name}
+                    className="h-5 w-5 rounded-full object-cover"
+                  />
                 )}
                 {cat.name}
               </a>

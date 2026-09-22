@@ -8,8 +8,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Static assets - long cache with immutable
-        source: "/:path*",
+        // Static assets in public/images - long cache with immutable
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        // Other static assets by extension
+        source: "/:path*.:ext(woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)",
         headers: [
           {
             key: "Cache-Control",
