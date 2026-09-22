@@ -252,7 +252,7 @@ export function BookingFlow({
             </p>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-[#6b4a2b]">Waktu</label>
+              <label className="mb-1 block text-sm font-medium text-[#6b4a2b]">Pilih Waktu & Jumlah Orang</label>
               <div className="grid grid-cols-1 gap-2">
                 {isLoadingSlots ? (
                   <div className="flex items-center justify-center py-4">
@@ -263,35 +263,31 @@ export function BookingFlow({
                   availableSlots.map((slot) => {
                     const disabled = slot.remaining < 1 || slot.remaining < partySize;
                     return (
-                      <button
-                        key={slot.id}
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => {
-                          setSelectedSlot(slot);
-                          setStep("confirm");
-                        }}
-                        className={`rounded-lg border p-3 text-left transition ${
-                          selectedSlot?.id === slot.id
-                            ? "border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium"
-                            : disabled
-                            ? "border-[#e6c98a] bg-gray-50 text-[#5a4a3a] opacity-60 cursor-not-allowed"
-                            : "border-[#e6c98a] bg-white text-[#5a4a3a] hover:border-[#A0522D]"
-                        }`}
-                      >
-                        <div className="flex justify-between">
-                          <span>
-                            {slot.name} · {slot.startTime} – {slot.endTime}
-                          </span>
-                          <span className={`text-sm ${disabled ? "text-red-600" : "text-[#A0522D]"}`}>
-                            {disabled
-                              ? slot.remaining < 1
-                                ? "Penuh"
-                                : `Hanya ${slot.remaining} kursi`
-                              : `${slot.remaining} kursi tersedia`}
-                          </span>
-                        </div>
-                      </button>
+                        <button
+                          key={slot.id}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => {
+                            setSelectedSlot(slot);
+                            setStep('confirm');
+                          }}
+                          className={`rounded-lg border p-3 text-left transition ${selectedSlot?.id === slot.id ? 'border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium' : disabled ? 'border-[#e6c98a] bg-gray-50 text-[#5a4a3a] opacity-60 cursor-not-allowed' : 'border-[#e6c98a] bg-white text-[#5a4a3a] hover:border-[#A0522D]'}
+                        `}
+                          >
+                            <>
+                              <span className="sr-only">meja tersedia</span>
+                              <span>
+                                {slot.name} · {slot.startTime} – {slot.endTime}&nbsp;
+                              </span>
+                              <span className={`text-sm ${disabled ? 'text-red-600' : 'text-[#A0522D]'}`}>
+                                {disabled
+                                  ? slot.remaining < 1
+                                    ? 'Penuh'
+                                    : 'Hanya ' + slot.remaining + ' kursi'
+                                  : slot.remaining + ' kursi tersedia'}
+                              </span>
+                            </>
+                          </button>
                     );
                   })
                 )}

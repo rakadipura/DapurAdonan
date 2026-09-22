@@ -12,75 +12,43 @@
 # Error details
 
 ```
-TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('text=Kode booking')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
 Call log:
-  - waiting for locator('text=meja tersedia') to be visible
+  - Expect "toBeVisible" locator('text=Kode booking') with timeout 5000ms
+  - waiting for locator('text=Kode booking')
 
 ```
 
-# Page snapshot
-
 ```yaml
-- generic [active] [ref=e1]:
-  - generic [ref=e3]:
-    - banner [ref=e4]:
-      - link "← Kembali ke Toko Mini Moni" [ref=e5] [cursor=pointer]:
-        - /url: /
-      - heading "Booking Meja" [level=1] [ref=e6]
-      - paragraph [ref=e7]: Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni. Hanya tersedia hingga 8 orang per meja.
-    - generic [ref=e8]:
-      - generic [ref=e9]:
-        - generic [ref=e10]: ✓
-        - generic [ref=e12]: ✓
-        - generic [ref=e14]: "3"
-      - button "Kembali" [ref=e16]
-      - generic [ref=e20]:
-        - heading "Pilih Waktu & Jumlah Orang" [level=2] [ref=e21]
-        - paragraph [ref=e22]: "Tanggal: 2026-09-23"
-        - generic [ref=e23]:
-          - generic [ref=e24]: Waktu
-          - generic [ref=e25]:
-            - button "Pagi · 09:00 – 11:00 Penuh" [disabled] [ref=e26]:
-              - generic [ref=e27]:
-                - generic [ref=e28]: Pagi · 09:00 – 11:00
-                - generic [ref=e29]: Penuh
-            - button "Siang · 12:00 – 14:00 2 kursi tersedia" [ref=e30]:
-              - generic [ref=e31]:
-                - generic [ref=e32]: Siang · 12:00 – 14:00
-                - generic [ref=e33]: 2 kursi tersedia
-            - button "Sore · 15:00 – 17:00 4 kursi tersedia" [ref=e34]:
-              - generic [ref=e35]:
-                - generic [ref=e36]: Sore · 15:00 – 17:00
-                - generic [ref=e37]: 4 kursi tersedia
-        - generic [ref=e38]:
-          - generic [ref=e39]: Jumlah orang (2)
-          - generic [ref=e40]:
-            - button "−" [ref=e41]
-            - generic [ref=e42]: "2"
-            - button "+" [ref=e43]
-          - paragraph [ref=e44]: Maksimal 8 orang per meja.
-  - button "Open Next.js Dev Tools" [ref=e50] [cursor=pointer]
-  - alert [ref=e54]
+- alert: Booking Berhasil — Toko Mini Moni
+- banner:
+  - link "← Kembali ke Toko Mini Moni":
+    - /url: /
+- text: ✅
+- heading "Booking Anda berhasil!" [level=1]
+- paragraph: Terima kasih sudah membooking di Toko Mini Moni.
+- text: Kode Referensi ZDNNYQFP
+- paragraph: Simpan kode ini. Cek status booking dengan kode dan nomor telepon.
+- heading "Detail Booking" [level=2]
+- text: Nama E2E Test User Nomor telepon 081234567890 Tanggal 2026-09-22 Jadwal 12:00 – 14:00 Jumlah orang 2 orang Status PENDING
+- link "Cek Status":
+  - /url: /booking/status?code=ZDNNYQFP&phone=081234567890
+- link "Konfirmasi via WhatsApp":
+  - /url: https://wa.me/6281234567890?text=Halo%20Toko%20Mini%20Moni,%20saya%20baru%20membooking%20meja%20dengan%20kode%20ZDNNYQFP.
+- contentinfo:
+  - paragraph: Toko Mini Moni · Jam operasional 09.00 – 17.00 WIB
+  - paragraph: "Hubungi kami via WhatsApp: 0812-3456-7890"
 ```
 
 # Test source
 
 ```ts
-  54  |   test('validates required fields in contact form', async ({ page }) => {
-  55  |     await page.waitForSelector('.grid button');
-  56  |     await page.locator('.grid button').first().click();
-  57  |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
-  58  |     await page.locator('text=meja tersedia').first().locator('..').locator('..').click();
-  59  |     
-  60  |     // Try to submit without filling required fields
-  61  |     await page.click('button:has-text("Konfirmasi Booking")');
-  62  |     
-  63  |     // Should show validation (browser native for required fields)
-  64  |     // Phone validation is custom
-  65  |     await expect(page.locator('text=Nomor telepon tidak valid')).toBeVisible({ timeout: 3000 });
-  66  |   });
-  67  | 
-  68  |   test('validates phone number format', async ({ page }) => {
   69  |     await page.waitForSelector('.grid button');
   70  |     await page.locator('.grid button').first().click();
   71  |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
@@ -166,8 +134,7 @@ Call log:
   151 |   test('full booking flow with valid data creates booking', async ({ page }) => {
   152 |     await page.waitForSelector('.grid button');
   153 |     await page.locator('.grid button').first().click();
-> 154 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
-      |                ^ TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
+  154 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
   155 |     await page.locator('text=meja tersedia').first().locator('..').locator('..').click();
   156 |     
   157 |     await page.fill('input[placeholder="Nama Anda"]', 'E2E Test User');
@@ -182,7 +149,8 @@ Call log:
   166 |     
   167 |     // Success page should show booking code
   168 |     await expect(page.locator('text=Booking Berhasil')).toBeVisible();
-  169 |     await expect(page.locator('text=Kode booking')).toBeVisible();
+> 169 |     await expect(page.locator('text=Kode booking')).toBeVisible();
+      |                                                     ^ Error: expect(locator).toBeVisible() failed
   170 |     
   171 |     // Should have WhatsApp link
   172 |     await expect(page.locator('text=Konfirmasi via WhatsApp')).toBeVisible();
@@ -268,4 +236,19 @@ Call log:
   252 |     expect(response.status()).toBe(400);
   253 |   });
   254 | });
+  255 | 
+  256 | test.describe('Booking Status Page', () => {
+  257 |   test('shows booking details with valid code and phone', async ({ page, request }) => {
+  258 |     // First create a booking
+  259 |     const tomorrow = new Date();
+  260 |     tomorrow.setDate(tomorrow.getDate() + 1);
+  261 |     const dateStr = tomorrow.toISOString().slice(0, 10);
+  262 |     
+  263 |     const createResponse = await request.post('/api/bookings', {
+  264 |       data: {
+  265 |         date: dateStr,
+  266 |         slotId: 1,
+  267 |         partySize: 2,
+  268 |         name: 'Status Test',
+  269 |         phone: '081234567890',
 ```

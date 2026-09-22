@@ -12,65 +12,41 @@
 # Error details
 
 ```
-TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
+Error: expect(locator).toContainText(expected) failed
+
+Locator: locator('text=Jumlah orang').locator('..').locator('span').first()
+Expected substring: "2"
+Timeout: 5000ms
+Error: element(s) not found
+
 Call log:
-  - waiting for locator('text=meja tersedia') to be visible
+  - Expect "toContainText" locator('text=Jumlah orang').locator('..').locator('span').first() with timeout 5000ms
+  - waiting for locator('text=Jumlah orang').locator('..').locator('span').first()
 
 ```
 
-# Page snapshot
-
 ```yaml
-- generic [active] [ref=e1]:
-  - generic [ref=e3]:
-    - banner [ref=e4]:
-      - link "← Kembali ke Toko Mini Moni" [ref=e5] [cursor=pointer]:
-        - /url: /
-      - heading "Booking Meja" [level=1] [ref=e6]
-      - paragraph [ref=e7]: Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni. Hanya tersedia hingga 8 orang per meja.
-    - generic [ref=e8]:
-      - generic [ref=e9]:
-        - generic [ref=e10]: ✓
-        - generic [ref=e12]: ✓
-        - generic [ref=e14]: "3"
-      - button "Kembali" [ref=e16]
-      - generic [ref=e20]:
-        - heading "Pilih Waktu & Jumlah Orang" [level=2] [ref=e21]
-        - paragraph [ref=e22]: "Tanggal: 2026-09-23"
-        - generic [ref=e23]:
-          - generic [ref=e24]: Waktu
-          - generic [ref=e25]:
-            - button "Pagi · 09:00 – 11:00 Penuh" [disabled] [ref=e26]:
-              - generic [ref=e27]:
-                - generic [ref=e28]: Pagi · 09:00 – 11:00
-                - generic [ref=e29]: Penuh
-            - button "Siang · 12:00 – 14:00 2 kursi tersedia" [ref=e30]:
-              - generic [ref=e31]:
-                - generic [ref=e32]: Siang · 12:00 – 14:00
-                - generic [ref=e33]: 2 kursi tersedia
-            - button "Sore · 15:00 – 17:00 4 kursi tersedia" [ref=e34]:
-              - generic [ref=e35]:
-                - generic [ref=e36]: Sore · 15:00 – 17:00
-                - generic [ref=e37]: 4 kursi tersedia
-        - generic [ref=e38]:
-          - generic [ref=e39]: Jumlah orang (2)
-          - generic [ref=e40]:
-            - button "−" [ref=e41]
-            - generic [ref=e42]: "2"
-            - button "+" [ref=e43]
-          - paragraph [ref=e44]: Maksimal 8 orang per meja.
-  - button "Open Next.js Dev Tools" [ref=e50] [cursor=pointer]
-  - alert [ref=e54]
+- banner:
+  - link "← Kembali ke Toko Mini Moni":
+    - /url: /
+  - heading "Booking Meja" [level=1]
+  - paragraph: Pilih tanggal dan jam untuk makan bersama di Toko Mini Moni. Hanya tersedia hingga 8 orang per meja.
+- text: 1 2 3
+- button "Kembali"
+- heading "Masukkan Info Kontak & Konfirmasi" [level=2]
+- text: Ringkasan:2026-09-23 · Siang (12:00–14:00) · 2 orang Nama lengkap
+- textbox "Nama Anda"
+- text: Nomor telepon
+- textbox "081234567890"
+- text: Email (opsional)
+- textbox "email@contoh.com"
+- button "Konfirmasi Booking" [disabled]
+- alert
 ```
 
 # Test source
 
 ```ts
-  3   | test.describe('Booking Flow - E2E', () => {
-  4   |   test.beforeEach(async ({ page }) => {
-  5   |     await page.goto('/booking');
-  6   |   });
-  7   | 
   8   |   test('displays booking page with date options', async ({ page }) => {
   9   |     await expect(page.locator('h1')).toContainText('Booking Meja');
   10  |     
@@ -166,13 +142,13 @@ Call log:
   100 |   test('party size controls work', async ({ page }) => {
   101 |     await page.waitForSelector('.grid button');
   102 |     await page.locator('.grid button').first().click();
-> 103 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
-      |                ^ TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
+  103 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
   104 |     await page.locator('text=meja tersedia').first().locator('..').locator('..').click();
   105 |     
   106 |     // Check default party size
   107 |     const partySizeDisplay = page.locator('text=Jumlah orang').locator('..').locator('span').first();
-  108 |     await expect(partySizeDisplay).toContainText('2');
+> 108 |     await expect(partySizeDisplay).toContainText('2');
+      |                                    ^ Error: expect(locator).toContainText(expected) failed
   109 |     
   110 |     // Increase party size
   111 |     await page.click('button:has-text("+")');
@@ -268,4 +244,9 @@ Call log:
   201 |     yesterday.setDate(yesterday.getDate() - 1);
   202 |     const dateStr = yesterday.toISOString().slice(0, 10);
   203 |     
+  204 |     const response = await request.post('/api/bookings', {
+  205 |       data: {
+  206 |         date: dateStr,
+  207 |         slotId: 1,
+  208 |         partySize: 2,
 ```

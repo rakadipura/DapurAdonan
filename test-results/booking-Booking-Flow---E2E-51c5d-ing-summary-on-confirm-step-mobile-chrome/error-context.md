@@ -12,64 +12,44 @@
 # Error details
 
 ```
-TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('text=Ringkasan:')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
 Call log:
-  - waiting for locator('text=meja tersedia') to be visible
+  - Expect "toBeVisible" locator('text=Ringkasan:') with timeout 5000ms
+  - waiting for locator('text=Ringkasan:')
 
 ```
 
-# Page snapshot
-
 ```yaml
-- generic [active] [ref=e1]:
-  - generic [ref=e3]:
-    - banner [ref=e4]:
-      - link "← Kembali ke Toko Mini Moni" [ref=e5] [cursor=pointer]:
-        - /url: /
-      - heading "Booking Meja" [level=1] [ref=e6]
-      - paragraph [ref=e7]: Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni. Hanya tersedia hingga 8 orang per meja.
-    - generic [ref=e8]:
-      - generic [ref=e9]:
-        - generic [ref=e10]: ✓
-        - generic [ref=e12]: ✓
-        - generic [ref=e14]: "3"
-      - button "Kembali" [ref=e16]
-      - generic [ref=e20]:
-        - heading "Pilih Waktu & Jumlah Orang" [level=2] [ref=e21]
-        - paragraph [ref=e22]: "Tanggal: 2026-09-23"
-        - generic [ref=e23]:
-          - generic [ref=e24]: Waktu
-          - generic [ref=e25]:
-            - button "Pagi · 09:00 – 11:00 Penuh" [disabled] [ref=e26]:
-              - generic [ref=e27]:
-                - generic [ref=e28]: Pagi · 09:00 – 11:00
-                - generic [ref=e29]: Penuh
-            - button "Siang · 12:00 – 14:00 2 kursi tersedia" [ref=e30]:
-              - generic [ref=e31]:
-                - generic [ref=e32]: Siang · 12:00 – 14:00
-                - generic [ref=e33]: 2 kursi tersedia
-            - button "Sore · 15:00 – 17:00 4 kursi tersedia" [ref=e34]:
-              - generic [ref=e35]:
-                - generic [ref=e36]: Sore · 15:00 – 17:00
-                - generic [ref=e37]: 4 kursi tersedia
-        - generic [ref=e38]:
-          - generic [ref=e39]: Jumlah orang (2)
-          - generic [ref=e40]:
-            - button "−" [ref=e41]
-            - generic [ref=e42]: "2"
-            - button "+" [ref=e43]
-          - paragraph [ref=e44]: Maksimal 8 orang per meja.
-  - button "Open Next.js Dev Tools" [ref=e50] [cursor=pointer]
-  - alert [ref=e54]
+- banner:
+  - link "← Kembali ke Toko Mini Moni":
+    - /url: /
+  - heading "Booking Meja" [level=1]
+  - paragraph: Pilih tanggal dan jam untuk makan bersama di Toko Mini Moni. Hanya tersedia hingga 8 orang per meja.
+- text: ✓ ✓ 3
+- button "Kembali"
+- heading "Pilih Jam & Jumlah Orang" [level=2]
+- paragraph: "Tanggal: 2026-09-23"
+- text: Pilih Waktu & Jumlah Orang
+- button "meja tersedia Pagi · 09:00 – 11:00Penuh" [disabled]
+- button "meja tersedia Siang · 12:00 – 14:00Penuh" [disabled]
+- button "meja tersedia Sore · 15:00 – 17:004 kursi tersedia"
+- text: Jumlah orang (2)
+- button "−"
+- text: "2"
+- button "+"
+- paragraph: Maksimal 8 orang per meja.
+- alert
 ```
 
 # Test source
 
 ```ts
-  43  |     // Wait for slots to load
-  44  |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
-  45  |     
-  46  |     // Click first available slot
   47  |     const availableSlot = page.locator('text=meja tersedia').first().locator('..').locator('..');
   48  |     await availableSlot.click();
   49  |     
@@ -166,12 +146,12 @@ Call log:
   140 |   test('shows booking summary on confirm step', async ({ page }) => {
   141 |     await page.waitForSelector('.grid button');
   142 |     await page.locator('.grid button').first().click();
-> 143 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
-      |                ^ TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
+  143 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
   144 |     await page.locator('text=meja tersedia').first().locator('..').locator('..').click();
   145 |     
   146 |     // Check summary shows
-  147 |     await expect(page.locator('text=Ringkasan:')).toBeVisible();
+> 147 |     await expect(page.locator('text=Ringkasan:')).toBeVisible();
+      |                                                   ^ Error: expect(locator).toBeVisible() failed
   148 |     await expect(page.locator('text=orang')).toBeVisible();
   149 |   });
   150 | 
@@ -268,4 +248,8 @@ Call log:
   241 |     
   242 |     const response = await request.get(`/api/bookings/slots?date=${dateStr}`);
   243 |     
+  244 |     expect(response.ok()).toBeTruthy();
+  245 |     const data = await response.json();
+  246 |     expect(data.slots).toBeDefined();
+  247 |     expect(Array.isArray(data.slots)).toBe(true);
 ```

@@ -12,7 +12,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cod
   const parsed = schema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Status tidak valid" }, { status: 400 });
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    return NextResponse.json(
+      { error: "Status tidak valid", details: fieldErrors },
+      { status: 400 },
+    );
   }
 
   try {

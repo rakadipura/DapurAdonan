@@ -97,7 +97,7 @@ async function ensureSlotCapacity(
   requiredSize: number,
 ): Promise<void> {
   const slot = await tx.bookingSlot.findUnique({ where: { id: slotId } });
-  if (!slot) throw new Error("Slot not found");
+  if (!slot) throw new Error(`Slot booking dengan ID ${slotId} tidak ditemukan`);
 
   const existing = await tx.booking.findMany({
     where: {
@@ -110,7 +110,9 @@ async function ensureSlotCapacity(
   const occupied = existing.reduce((sum, b) => sum + b.partySize, 0);
   const available = slot.capacity - occupied;
   if (available < requiredSize) {
-    throw new Error(`Jadwal penuh; hanya tersisa ${available} orang`);
+    throw new Error(
+      `Jadwal penuh untuk slot ${slot.name} (${slot.startTime}-${slot.endTime}) pada tanggal ${wibDate.toISOString().slice(0, 10)}; hanya tersisa ${available} orang dari kapasitas ${slot.capacity}, butuh ${requiredSize}`
+    );
   }
 }
 
@@ -119,8 +121,11 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
   const wibDate = fromWIBString(input.date);
 
   const slot = await prisma.bookingSlot.findUnique({ where: { id: input.slotId } });
-  if (!slot || !slot.isActive) {
-    throw new Error("Jadwal tidak tersedia");
+  if (!slot) {
+    throw new Error(`Slot booking dengan ID ${input.slotId} tidak ditemukan`);
+  }
+  if (!slot.isActive) {
+    throw new Error(`Slot booking "${slot.name}" (${slot.startTime}-${slot.endTime}) tidak aktif`);
   }
 
   const nowWIB = toWIB(new Date());
@@ -128,7 +133,19 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
   const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
   const diffDays = (dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
   if (diffDays < 0) {
-    throw new Error("Tanggal booking harus hari ini atau setelahnya");
+    throw new Error(
+      `Tanggal booking (${input.date}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStart.toISOString().slice(0, 10)}`
+    );
+  }
+
+  // Validate party size against max
+  const { getMaxPartySize } = await import("./settings");
+  const maxPartySize = await getMaxPartySize();
+  if (input.partySize > maxPartySize) {
+    throw new Error(`Jumlah orang (${input.partySize}) melebihi batas maksimum (${maxPartySize})`);
+  }
+  if (input.partySize < 1) {
+    throw new Error("Jumlah orang minimal 1");
   }
 
   const code = await generateUniqueBookingCode();
@@ -159,7 +176,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
     return bookingWithSlot;
   });
 
-  if (!result) throw new Error("Booking creation failed");
+  if (!result) throw new Error("Booking creation failed: data tidak tersimpan");
   return mapBookingWithSlot(result);
 }
 
@@ -229,8 +246,11 @@ export async function rescheduleBooking(
   const wibDate = fromWIBString(newDate);
 
   const slot = await prisma.bookingSlot.findUnique({ where: { id: newSlotId } });
-  if (!slot || !slot.isActive) {
-    throw new Error("Jadwal baru tidak tersedia");
+  if (!slot) {
+    throw new Error(`Slot booking baru dengan ID ${newSlotId} tidak ditemukan`);
+  }
+  if (!slot.isActive) {
+    throw new Error(`Slot booking baru "${slot.name}" (${slot.startTime}-${slot.endTime}) tidak aktif`);
   }
 
   const nowWIB = toWIB(new Date());
@@ -238,10 +258,12 @@ export async function rescheduleBooking(
   const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
   const diffDays = (dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
   if (diffDays < 0) {
-    throw new Error("Tanggal booking harus hari ini atau setelahnya");
+    throw new Error(
+      `Tanggal booking baru (${newDate}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStart.toISOString().slice(0, 10)}`
+    );
   }
 
-      const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
+  const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
         // Verify capacity via shared helper (exclude RESCHEDULED)
         await ensureSlotCapacity(tx, newSlotId, wibDate, booking.partySize);
 
@@ -266,7 +288,9 @@ export async function rescheduleBooking(
 
 export async function updateBookingStatus(code: string, status: BookingStatus): Promise<BookingWithSlot | null> {
   if (!BOOKING_STATUSES.includes(status)) {
-    throw new Error(`Status booking tidak valid: ${status}`);
+    throw new Error(
+      `Status booking tidak valid: "${status}". Status yang diperbolehkan: ${BOOKING_STATUSES.join(", ")}`
+    );
   }
 
   try {

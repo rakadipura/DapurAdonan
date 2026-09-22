@@ -12,9 +12,13 @@
 # Error details
 
 ```
-TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
+Test timeout of 30000ms exceeded.
+```
+
+```
+Error: locator.textContent: Test timeout of 30000ms exceeded.
 Call log:
-  - waiting for locator('text=meja tersedia') to be visible
+  - waiting for locator('text=Maksimal')
 
 ```
 
@@ -27,49 +31,36 @@ Call log:
       - link "← Kembali ke Toko Mini Moni" [ref=e5] [cursor=pointer]:
         - /url: /
       - heading "Booking Meja" [level=1] [ref=e6]
-      - paragraph [ref=e7]: Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni. Hanya tersedia hingga 8 orang per meja.
+      - paragraph [ref=e7]: Pilih tanggal dan jam untuk makan bersama di Toko Mini Moni. Hanya tersedia hingga 8 orang per meja.
     - generic [ref=e8]:
       - generic [ref=e9]:
-        - generic [ref=e10]: ✓
-        - generic [ref=e12]: ✓
+        - generic [ref=e10]: "1"
+        - generic [ref=e12]: "2"
         - generic [ref=e14]: "3"
       - button "Kembali" [ref=e16]
       - generic [ref=e20]:
-        - heading "Pilih Waktu & Jumlah Orang" [level=2] [ref=e21]
-        - paragraph [ref=e22]: "Tanggal: 2026-09-23"
-        - generic [ref=e23]:
-          - generic [ref=e24]: Waktu
+        - heading "Masukkan Info Kontak & Konfirmasi" [level=2] [ref=e21]
+        - generic [ref=e22]:
+          - text: "Ringkasan:"
+          - generic [ref=e23]: 2026-09-23 · Siang (12:00–14:00) · 2 orang
+        - generic [ref=e24]:
           - generic [ref=e25]:
-            - button "Pagi · 09:00 – 11:00 Penuh" [disabled] [ref=e26]:
-              - generic [ref=e27]:
-                - generic [ref=e28]: Pagi · 09:00 – 11:00
-                - generic [ref=e29]: Penuh
-            - button "Siang · 12:00 – 14:00 2 kursi tersedia" [ref=e30]:
-              - generic [ref=e31]:
-                - generic [ref=e32]: Siang · 12:00 – 14:00
-                - generic [ref=e33]: 2 kursi tersedia
-            - button "Sore · 15:00 – 17:00 4 kursi tersedia" [ref=e34]:
-              - generic [ref=e35]:
-                - generic [ref=e36]: Sore · 15:00 – 17:00
-                - generic [ref=e37]: 4 kursi tersedia
-        - generic [ref=e38]:
-          - generic [ref=e39]: Jumlah orang (2)
-          - generic [ref=e40]:
-            - button "−" [ref=e41]
-            - generic [ref=e42]: "2"
-            - button "+" [ref=e43]
-          - paragraph [ref=e44]: Maksimal 8 orang per meja.
-  - button "Open Next.js Dev Tools" [ref=e50] [cursor=pointer]
-  - alert [ref=e54]
+            - generic [ref=e26]: Nama lengkap
+            - textbox "Nama Anda" [ref=e27]
+          - generic [ref=e28]:
+            - generic [ref=e29]: Nomor telepon
+            - textbox "081234567890" [ref=e30]
+          - generic [ref=e31]:
+            - generic [ref=e32]: Email (opsional)
+            - textbox "email@contoh.com" [ref=e33]
+        - button "Konfirmasi Booking" [disabled] [ref=e34]
+  - button "Open Next.js Dev Tools" [ref=e40] [cursor=pointer]
+  - alert [ref=e44]
 ```
 
 # Test source
 
 ```ts
-  22  |     await firstDateButton.click();
-  23  |     
-  24  |     // Should show slot selection step
-  25  |     await expect(page.locator('text=Pilih Waktu & Jumlah Orang')).toBeVisible();
   26  |   });
   27  | 
   28  |   test('shows available slots after date selection', async ({ page }) => {
@@ -166,12 +157,12 @@ Call log:
   119 |   test('disables party size at max', async ({ page }) => {
   120 |     await page.waitForSelector('.grid button');
   121 |     await page.locator('.grid button').first().click();
-> 122 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
-      |                ^ TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
+  122 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
   123 |     await page.locator('text=meja tersedia').first().locator('..').locator('..').click();
   124 |     
   125 |     // Get max party size from text
-  126 |     const maxText = await page.locator('text=Maksimal').textContent();
+> 126 |     const maxText = await page.locator('text=Maksimal').textContent();
+      |                                                         ^ Error: locator.textContent: Test timeout of 30000ms exceeded.
   127 |     const maxMatch = maxText?.match(/Maksimal (\d+) orang/);
   128 |     const maxPartySize = maxMatch ? parseInt(maxMatch[1]) : 8;
   129 |     
@@ -268,4 +259,8 @@ Call log:
   220 |     const tomorrow = new Date();
   221 |     tomorrow.setDate(tomorrow.getDate() + 1);
   222 |     const dateStr = tomorrow.toISOString().slice(0, 10);
+  223 |     
+  224 |     const response = await request.post('/api/bookings', {
+  225 |       data: {
+  226 |         date: dateStr,
 ```

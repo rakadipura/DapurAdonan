@@ -175,10 +175,10 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
   } = input;
 
   if (!isValidPhone(customerPhone)) {
-    throw new Error("Nomor telepon tidak valid");
+    throw new Error(`Nomor telepon tidak valid: "${customerPhone}". Format: 08xxxxxxxxxx atau +628xxxxxxxxxx`);
   }
   if (customerEmail && !isValidEmail(customerEmail)) {
-    throw new Error("Alamat email tidak valid");
+    throw new Error(`Alamat email tidak valid: "${customerEmail}". Format: nama@domain.com`);
   }
 
   const orderItems: Array<{
@@ -208,7 +208,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     });
 
     if (!product || !product.isAvailable) {
-      throw new Error(`Produk "${item.productId}" tidak tersedia`);
+      throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan atau tidak tersedia`);
     }
 
     // Validate variant if provided
@@ -216,7 +216,8 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     if (item.variantId) {
       variant = product.variants.find((v: { id: number; name: string; priceDiff: number }) => v.id === item.variantId) ?? null;
       if (!variant) {
-        throw new Error(`Varian tidak valid untuk "${product.name}"`);
+        const availableVariants = product.variants.map((v) => `${v.id}:${v.name}`).join(", ");
+        throw new Error(`Varian ID ${item.variantId} tidak valid untuk "${product.name}". Varian tersedia: ${availableVariants || "tidak ada"}`);
       }
     }
 
@@ -225,7 +226,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     const requiredAddOns = product.addOns.filter((a: { id: number; name: string; price: number; isRequired: boolean }) => a.isRequired);
     for (const req of requiredAddOns) {
       if (!selectedAddOns.find((a: { id: number; name: string; price: number; isRequired: boolean }) => a.id === req.id)) {
-        throw new Error(`Add-on wajib "${req.name}" harus dipilih untuk "${product.name}"`);
+        throw new Error(`Add-on wajib "${req.name}" (ID: ${req.id}) harus dipilih untuk produk "${product.name}"`);
       }
     }
 
@@ -250,10 +251,10 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       const soldQty = soldToday[0]?._sum.qty || 0;
       const available = product.dailyStock - soldQty;
       if (available <= 0) {
-        throw new Error(`Stok "${product.name}" habis hari ini`);
+        throw new Error(`Stok harian untuk "${product.name}" sudah habis (stok harian: ${product.dailyStock}, terpakai: ${soldQty})`);
       }
       if (item.qty > available) {
-        throw new Error(`Stok "${product.name}" tidak cukup; tersisa ${available}`);
+        throw new Error(`Stok "${product.name}" tidak cukup: diminta ${item.qty}, tersisa ${available} (stok harian: ${product.dailyStock}, terpakai: ${soldQty})`);
       }
     }
 
@@ -266,7 +267,9 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
         const pickupStart = new Date(pickup.getFullYear(), pickup.getMonth(), pickup.getDate());
         const diffDays = (pickupStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
         if (diffDays < product.leadTimeDays) {
-          throw new Error(`Pesanan kue custom memerlukan lead time minimal ${product.leadTimeDays} hari`);
+          throw new Error(
+            `Pesanan kue custom/lead time memerlukan minimal ${product.leadTimeDays} hari persiapan. Tanggal pengambilan (${pickupDate}) terlalu dekat (hanya ${diffDays} hari dari hari ini). Pilih tanggal minimal ${product.leadTimeDays} hari ke depan.`
+          );
         }
       }
     }
@@ -292,7 +295,8 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     const zones = await getDeliveryZonesRaw();
     const zone = zones.find((z) => z.zone === deliveryZone);
     if (!zone) {
-      throw new Error("Zona pengiriman tidak ditemukan");
+      const availableZones = zones.map((z) => z.zone).join(", ");
+      throw new Error(`Zona pengiriman "${deliveryZone}" tidak ditemukan. Zona tersedia: ${availableZones || "tidak ada"}`);
     }
     deliveryFee = zone.baseFee;
   }
@@ -302,12 +306,13 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
   // Validate pickup date / window against settings if pickup.
   if (type === "PICKUP") {
     if (!pickupDate || !pickupWindow) {
-      throw new Error("Untuk pemesanan pick-up, tanggal dan jadwal pengambilan wajib diisi");
+      throw new Error(`Untuk pemesanan pick-up, tanggal pengambilan (${pickupDate || "kosong"}) dan jadwal pengambilan (${pickupWindow || "kosong"}) wajib diisi`);
     }
     const windows = await getPickupWindowsRaw();
     const validWindow = windows.find((w) => `${w.start}-${w.end}` === pickupWindow);
     if (!validWindow) {
-      throw new Error("Jadwal pengambilan tidak tersedia");
+      const availableWindows = windows.map((w) => `${w.start}-${w.end}`).join(", ");
+      throw new Error(`Jadwal pengambilan "${pickupWindow}" tidak tersedia. Jadwal yang valid: ${availableWindows || "tidak ada"}`);
     }
     const pickup = fromWIBString(pickupDate);
     const nowWIB = toWIB(new Date());
@@ -315,7 +320,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     const pickupStart = new Date(pickup.getFullYear(), pickup.getMonth(), pickup.getDate());
     const diffDays = (pickupStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
     if (diffDays < 0) {
-      throw new Error("Tanggal pengambilan harus hari ini atau setelahnya");
+      throw new Error(`Tanggal pengambilan (${pickupDate}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStart.toISOString().slice(0, 10)}`);
     }
   }
 
@@ -371,7 +376,9 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
 
 export async function updateOrderStatus(code: string, status: OrderStatus): Promise<OrderWithItems | null> {
   if (!ORDER_STATUSES.includes(status)) {
-    throw new Error(`Status pesanan tidak valid: ${status}`);
+    throw new Error(
+      `Status pesanan tidak valid: "${status}". Status yang diperbolehkan: ${ORDER_STATUSES.join(", ")}`
+    );
   }
 
   try {
