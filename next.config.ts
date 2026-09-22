@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
   // Ensure build ID changes on each deployment
   generateBuildId: async () => {
     // Use git commit hash or timestamp for unique build ID
-    const { execSync } = require("child_process");
+    const { execSync } = await import("child_process");
     try {
       const hash = execSync("git rev-parse --short HEAD").toString().trim();
       return hash;

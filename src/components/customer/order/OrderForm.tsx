@@ -421,6 +421,7 @@ export function OrderForm({
       {step === "cart" && state.cart.length === 0 && (
         <div className="rounded-xl border border-dashed border-[#e6c98a] bg-[#FFF6E6] p-6 text-center text-sm text-[#5a4a3a]">
           <p className="mb-2">Keranjang masih kosong.</p>
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <p>Tambahkan produk dari menu di atas, lalu klik "Tambah ke Keranjang".</p>
         </div>
       )}

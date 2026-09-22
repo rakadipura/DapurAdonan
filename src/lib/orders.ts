@@ -663,7 +663,7 @@ async function getPickupWindowsRaw(): Promise<PickupWindow[]> {
   try { return JSON.parse(row.value); } catch { return []; }
 }
 
-let __orderCodeCounter = 0;
+const __orderCodeCounter = 0;
 function generateOrderCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";

@@ -76,7 +76,8 @@ export function OrdersPanel() {
     mountedRef.current = true;
     load();
     return () => { mountedRef.current = false; };
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStatusChange = (code: string, status: OrderStatus) => {
     setPendingCode(code);

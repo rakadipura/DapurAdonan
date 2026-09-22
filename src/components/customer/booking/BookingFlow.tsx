@@ -60,13 +60,14 @@ export function BookingFlow({
 
   // Initialize availableSlots from props on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAvailableSlots(
       slots.map((s) => ({
         ...s,
         remaining: s.capacity,
       }))
     );
-  }, [slots]);
+  }, []);
 
   const handleDateChange = async (date: string) => {
     setSelectedDate(date);

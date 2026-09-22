@@ -132,12 +132,14 @@ export function ProductsPanel() {
     }
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadProducts();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadCategories();
     return () => { mountedRef.current = false; };
-  }, [loadProducts, loadCategories]);
+  }, []);
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());

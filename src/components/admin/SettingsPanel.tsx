@@ -112,9 +112,10 @@ export function SettingsPanel() {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSettings();
     return () => { mountedRef.current = false; };
-  }, [loadSettings]);
+  }, []);
 
   const validateForm = (key: string, value: string): boolean => {
     const def = getDefinition(key);

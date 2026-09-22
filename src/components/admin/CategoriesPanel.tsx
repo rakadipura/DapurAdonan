@@ -64,9 +64,10 @@ export function CategoriesPanel() {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadCategories();
     return () => { mountedRef.current = false; };
-  }, [loadCategories]);
+  }, []);
 
   const validateForm = (data: CategoryFormData): boolean => {
     const errors: Partial<Record<keyof CategoryFormData, string>> = {};

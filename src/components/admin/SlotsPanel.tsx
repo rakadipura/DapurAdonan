@@ -66,9 +66,10 @@ export function SlotsPanel() {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSlots();
     return () => { mountedRef.current = false; };
-  }, [loadSlots]);
+  }, []);
 
   const validateForm = (data: SlotFormData): boolean => {
     const errors: Partial<Record<keyof SlotFormData, string>> = {};

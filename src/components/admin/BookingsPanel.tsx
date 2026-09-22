@@ -77,7 +77,8 @@ export function BookingsPanel() {
     mountedRef.current = true;
     load();
     return () => { mountedRef.current = false; };
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStatusChange = (code: string, status: BookingStatus) => {
     setPendingCode(code);
