@@ -2,6 +2,13 @@
   "name": "toko-mini-moni-app",
   "version": "0.1.0",
   "private": true,
+  "allowScripts": [
+    "@prisma/client",
+    "@prisma/engines",
+    "esbuild",
+    "prisma",
+    "unrs-resolver"
+  ],
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
     "build": "npm run version:gen && prisma generate && next build",
