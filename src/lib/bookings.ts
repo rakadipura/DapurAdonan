@@ -1,7 +1,6 @@
 import { prisma } from "./db";
 import type { CustomerType } from "@/types";
-import { toWIB, fromWIBString, formatDateYMD, formatDateLong } from "./settings";
-
+import { toWIB, fromWIBString, formatDateYMD, formatDateLong, getWhatsAppNumber } from "./settings";
 
 import { isValidPhone, normalizePhone } from "./regex";
 
@@ -115,6 +114,67 @@ async function ensureSlotCapacity(
   }
 }
 
+
+export async function createBooking(input: CreateBookingInput): Promise<BookingWithSlot> {
+  const wibDate = fromWIBString(input.date);
+
+  const slot = await prisma.bookingSlot.findUnique({ where: { id: input.slotId } });
+  if (!slot || !slot.isActive) {
+    throw new Error("Jadwal tidak tersedia");
+  }
+
+  const nowWIB = toWIB(new Date());
+  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
+  const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
+  const diffDays = (dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
+  if (diffDays < 0) {
+    throw new Error("Tanggal booking harus hari ini atau setelahnya");
+  }
+
+  const code = await generateUniqueBookingCode();
+
+  const result = await prisma.$transaction(async (tx) => {
+    await ensureSlotCapacity(tx, input.slotId, wibDate, input.partySize);
+
+    const booking = await tx.booking.create({
+      data: {
+        code,
+        date: wibDate,
+        slotId: input.slotId,
+        partySize: input.partySize,
+        name: input.name,
+        phone: normalizePhone(input.phone),
+        email: input.email || null,
+        status: "PENDING",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+
+    const bookingWithSlot = await tx.booking.findUnique({
+      where: { code },
+      include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+    });
+
+    return bookingWithSlot;
+  });
+
+  if (!result) throw new Error("Booking creation failed");
+  return mapBookingWithSlot(result);
+}
+
+async function generateUniqueBookingCode(): Promise<string> {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  for (let attempt = 0; attempt < 10; attempt++) {
+    let code = "";
+    for (let i = 0; i < 8; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    const existing = await prisma.booking.findUnique({ where: { code } });
+    if (!existing) return code;
+  }
+  throw new Error("Gagal generate kode booking unik");
+}
 
 export async function getBooking(code: string, phone: string): Promise<BookingWithSlot | null> {
   const booking = await prisma.booking.findUnique({
