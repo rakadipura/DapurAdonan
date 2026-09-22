@@ -14,14 +14,6 @@ export const metadata: Metadata = {
 };
 
 export default async function BookingPage() {
-  if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL == null) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-red-600">
-        Database not configured.
-      </div>
-    );
-  }
-
   const [categories, products, slots, dateOptions, maxPartySize, leadHours] = await Promise.all([
     prisma.category.findMany({
       where: { isVisible: true },
