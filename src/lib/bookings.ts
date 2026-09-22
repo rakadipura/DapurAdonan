@@ -1,8 +1,10 @@
 import { prisma } from "./db";
 import type { CustomerType } from "@/types";
 import { toWIB, fromWIBString, formatDateYMD, formatDateLong } from "./settings";
+
+
 import { isValidPhone, normalizePhone } from "./regex";
-import { getWhatsAppNumber } from "./settings";
+
 
 export type BookingStatus =
   | "PENDING"
@@ -64,7 +66,7 @@ export async function getAvailableSlots(date: string): Promise<SlotAvailability[
   const bookings = await prisma.booking.findMany({
     where: {
       date: wibDate,
-      status: { notIn: ["CANCELLED", "NO_SHOW"] },
+      status: { notIn: ["CANCELLED", "NO_SHOW", "RESCHEDULED"] },
     },
     select: { slotId: true, partySize: true, status: true },
   });
@@ -89,74 +91,30 @@ export async function getAvailableSlots(date: string): Promise<SlotAvailability[
   }));
 }
 
-export async function createBooking(input: CreateBookingInput): Promise<BookingWithSlot> {
-  const { date, slotId, partySize, name, phone, email } = input;
+async function ensureSlotCapacity(
+  tx: import("@prisma/client").Prisma.TransactionClient,
+  slotId: number,
+  wibDate: Date,
+  requiredSize: number,
+): Promise<void> {
+  const slot = await tx.bookingSlot.findUnique({ where: { id: slotId } });
+  if (!slot) throw new Error("Slot not found");
 
-  if (!isValidPhone(phone)) {
-    throw new Error("Nomor telepon tidak valid");
-  }
-  if (partySize < 1 || partySize > 8) {
-    throw new Error("Jumlah orang harus antara 1 dan 8");
-  }
-
-  const wibDate = fromWIBString(date);
-
-  const slot = await prisma.bookingSlot.findUnique({ where: { id: slotId } });
-  if (!slot || !slot.isActive) {
-    throw new Error("Jadwal tidak tersedia");
-  }
-
-  const nowWIB = toWIB(new Date());
-  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
-  const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
-  const diffDays = (dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
-  if (diffDays < 0) {
-    throw new Error("Tanggal booking harus hari ini atau setelahnya");
-  }
-
-  const maxPartySize = await getMaxPartySize();
-  if (partySize > maxPartySize) {
-    throw new Error(`Jumlah orang melebihi batas maksimum (${maxPartySize})`);
-  }
-
-  const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
-    const bookings = await tx.booking.findMany({
-      where: {
-        date: wibDate,
-        slotId,
-        status: { notIn: ["CANCELLED", "NO_SHOW"] },
-      },
-      select: { partySize: true },
-    });
-    const currentCount = bookings.reduce((sum: number, b: { partySize: number }) => sum + b.partySize, 0);
-    const available = slot.capacity - currentCount;
-
-    if (available < partySize) {
-      throw new Error(`Jadwal penuh; hanya tersisa ${available} orang`);
-    }
-
-    const bookingCode = generateBookingCode();
-
-    const booking = await tx.booking.create({
-      data: {
-        code: bookingCode,
-        date: wibDate,
-        slotId,
-        partySize,
-        name,
-        phone: normalizePhone(phone),
-        email,
-        status: "PENDING",
-        createdAt: new Date(),
-      },
-      include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
-    });
-
-    return booking;
+  const existing = await tx.booking.findMany({
+    where: {
+      date: wibDate,
+      slotId,
+      status: { notIn: ["CANCELLED", "NO_SHOW", "RESCHEDULED"] },
+    },
+    select: { partySize: true },
   });
-
-  return mapBookingWithSlot(result);
+  const occupied = existing.reduce((sum, b) => sum + b.partySize, 0);
+  const available = slot.capacity - occupied;
+  if (available < requiredSize) {
+    throw new Error(`Jadwal penuh; hanya tersisa ${available} orang`);
+  }
 }
+
 
 export async function getBooking(code: string, phone: string): Promise<BookingWithSlot | null> {
   const booking = await prisma.booking.findUnique({
@@ -223,36 +181,25 @@ export async function rescheduleBooking(
     throw new Error("Tanggal booking harus hari ini atau setelahnya");
   }
 
-  const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
-    const bookings = await tx.booking.findMany({
-      where: {
-        date: wibDate,
-        status: { notIn: ["CANCELLED", "NO_SHOW"] },
-      },
-      select: { partySize: true },
-    });
-    const currentCount = bookings.reduce((sum: number, b: { partySize: number }) => sum + b.partySize, 0);
-    const available = slot.capacity - currentCount;
+      const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
+        // Verify capacity via shared helper (exclude RESCHEDULED)
+        await ensureSlotCapacity(tx, newSlotId, wibDate, booking.partySize);
 
-    if (available < booking.partySize) {
-      throw new Error(`Jadwal baru penuh; hanya tersisa ${available} orang`);
-    }
+        const updated = await tx.booking.update({
+          where: { code },
+          data: {
+            date: wibDate,
+            slotId: newSlotId,
+            status: "RESCHEDULED",
+            rescheduledFromId: booking.id,
+            rescheduledAt: new Date(),
+            updatedAt: new Date(),
+          },
+          include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+        });
 
-    const updated = await tx.booking.update({
-      where: { code },
-      data: {
-        date: wibDate,
-        slotId: newSlotId,
-        status: "RESCHEDULED",
-        rescheduledFromId: booking.id,
-        rescheduledAt: new Date(),
-        updatedAt: new Date(),
-      },
-      include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
-    });
-
-    return updated;
-  });
+        return updated;
+      });
 
   return mapBookingWithSlot(result);
 }
@@ -360,7 +307,8 @@ export function generateWhatsAppLink(booking: BookingWithSlot): string {
   const waNumber = getWhatsAppNumber();
   const message = `Halo Toko Mini Moni, saya ingin konfirmasi booking meja:\n` +
     `Kode: ${booking.code}\n` +
-    `Tanggal: ${formatDateLong(new Date(booking.date))}\n` +
+    // Parse the stored YYYY‑MM‑DD string as a WIB date to avoid timezone shift
+    `Tanggal: ${formatDateLong(fromWIBString(booking.date))}\n` +
     `Waktu: ${booking.slot.startTime}-${booking.slot.endTime}\n` +
     `Jumlah orang: ${booking.partySize}\n` +
     `Nama: ${booking.name}\n` +
@@ -409,11 +357,11 @@ function mapBookingWithSlot(booking: {
   };
 }
 
-async function getMaxPartySize(): Promise<number> {
-  const row = await prisma.setting.findUnique({ where: { key: "maxPartySize" } });
-  const n = Number(row?.value);
-  return Number.isFinite(n) && n > 0 ? n : 8;
-}
+// Re-use the centralized helper from settings.ts
+import { getMaxPartySize as getMaxPartySizeSetting } from "./settings";
+
+// Legacy alias kept for backward compatibility (if any internal calls exist)
+const getMaxPartySize = getMaxPartySizeSetting;
 
 function generateBookingCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

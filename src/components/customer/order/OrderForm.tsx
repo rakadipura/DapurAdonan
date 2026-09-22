@@ -45,6 +45,7 @@ export function OrderForm({
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryZone, setDeliveryZone] = useState(settings.deliveryZones[0]?.zone ?? "");
   const [paymentMethod, setPaymentMethod] = useState<"TRANSFER" | "EWALLET" | "CASH" | "QRIS">("CASH");
+  const [paymentProofUrl, setPaymentProofUrl] = useState<string>("");
   const [notes, setNotes] = useState("");
 
   const availableWindows = settings.pickupWindows;
@@ -75,7 +76,7 @@ export function OrderForm({
           deliveryAddress: orderType === "DELIVERY" ? deliveryAddress : undefined,
           deliveryZone: orderType === "DELIVERY" ? deliveryZone : undefined,
           paymentMethod,
-          notes: notes || undefined,
+           paymentProofUrl: paymentProofUrl || undefined,
           isCustomCake: hasCustomCake,
           customText: hasCustomCake ? state.cart.find((c) => {
             const p = products.find((pp) => pp.id === c.productId);
@@ -104,7 +105,7 @@ export function OrderForm({
         setOrderError("Terjadi kesalahan. Coba lagi.");
       }
     });
-  }, [state.cart, contact, orderType, pickupDate, pickupWindow, deliveryAddress, deliveryZone, paymentMethod, notes, clearCart, products, hasCustomCake]);
+    }, [state.cart, contact, orderType, pickupDate, pickupWindow, deliveryAddress, deliveryZone, paymentMethod, paymentProofUrl, notes, clearCart, products, hasCustomCake]);
 
   return (
     <div className="rounded-2xl border border-[#efe2c7] bg-white p-6 shadow-md">
@@ -346,8 +347,17 @@ export function OrderForm({
                 </button>
               ))}
             </div>
-            {paymentMethod === "TRANSFER" && settings.transferInfo && (
-              <div className="mt-2 rounded-lg bg-[#FFF6E6] p-3 text-xs text-[#5a4a3a]" dangerouslySetInnerHTML={{ __html: settings.transferInfo }} />
+            {paymentMethod === "TRANSFER" && (
+              <div className="mt-2">
+                <label className="mb-1 block text-xs font-medium text-[#5a4a3a]">Bukti Transfer (URL)</label>
+                <input
+                  type="text"
+                  value={paymentProofUrl}
+                  onChange={(e) => setPaymentProofUrl(e.target.value)}
+                  placeholder="https://example.com/bukti.jpg"
+                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                />
+              </div>
             )}
             {paymentMethod === "QRIS" && (
               <div className="mt-2 rounded-lg bg-[#FFF6E6] p-3 text-xs text-[#5a4a3a]">

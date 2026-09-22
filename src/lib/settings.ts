@@ -65,15 +65,8 @@ export async function getBookingLeadHours(): Promise<number> {
 export async function getPickupDateOptions(
   count: number = 14,
 ): Promise<{ date: string; label: string }[]> {
-  const cutoffHour = await getOrderCutoffHour();
-  const leadHours = await getBookingLeadHours();
-  const zones = await getDeliveryZones();
-  const windows = await getPickupWindows();
-  const options: { date: string; label: string }[] = [];
-
-  // We start from tomorrow (booking today is typically not available for a
-  // small shop) and produce `count` future days.
   const now = new Date();
+  const options: { date: string; label: string }[] = [];
   for (let i = 1; i <= count; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() + i);
@@ -116,16 +109,17 @@ export function formatDateShort(d: Date): string {
  * Compute the latest allowed pickup/booking date given a cutoff hour and
  * lead-time requirement. Returns an ISO date string (YYYY-MM-DD).
  */
-export function latestAllowedBookingDate(): string {
+export async function latestAllowedBookingDate(): Promise<string> {
   const now = new Date();
   const wib = toWIB(now);
-  const cutoffHour = 16; // hours (WIB)
-  const leadHours = 1;
-  // If current WIB time >= cutoff, next day earliest + lead; else today + lead.
+  // Pull configurable values (fallbacks are applied inside the helpers)
+  const [cutoffHour, leadHours] = await Promise.all([
+    getOrderCutoffHour(),
+    getBookingLeadHours(),
+  ]);
   const dayOffset = wib.getHours() >= cutoffHour ? 1 : 0;
   const d = new Date(wib);
   d.setDate(d.getDate() + dayOffset + leadHours);
-  // Move to 00:00 for the date string.
   d.setHours(0, 0, 0, 0);
   return formatDateYMD(d);
 }

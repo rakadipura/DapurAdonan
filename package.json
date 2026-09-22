@@ -6,7 +6,7 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "npm run version:gen && prisma generate && next build",
     "start": "next start",
-    "lint": "eslint",
+    "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

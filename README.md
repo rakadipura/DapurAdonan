@@ -19,30 +19,37 @@ Online ordering and table booking app for a home bakery/cake shop, built with Ne
 
 ## Getting started
 
-### 1. Install dependencies
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2. Configure the database
-
-Create a `.env.local` file in the project root:
-
-```
-DATABASE_URL="postgresql://USER:PASSWORD@127.0.0.1:5432/toko_mini_moni?schema=public"
-```
-
-You'll need a reachable PostgreSQL instance (local install, Docker, or a hosted database) with a `toko_mini_moni` database created.
-
-### 3. Apply the schema and seed data
+2. Set up a test database and run migrations:
 
 ```bash
-npm run db:push    # or: npm run db:migrate
-npm run db:seed
+npm run db:ci:setup
 ```
 
-### 4. Run the dev server
+3. Run type‑check:
+
+```bash
+npm run type-check
+```
+
+4. Run unit tests:
+
+```bash
+npm run test
+```
+
+5. Run end‑to‑end tests:
+
+```bash
+npm run test:e2e
+```
+
+6. Start the development server:
 
 ```bash
 npm run dev
@@ -64,7 +71,20 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run db:seed` | Seed the database with sample data |
 | `npm run db:studio` | Open Prisma Studio |
 
-## Notes
+## CI / CD
 
-- `.env.local` is required at runtime; Next.js only reads it from the project root.
-- The `/booking` page instantiates Prisma during static prerender, so a production build needs a reachable database at build time.
+[![CI](https://github.com/your-repo/toko-mini-moni-app/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/your-repo/toko-mini-moni-app/actions/workflows/ci-cd.yml)
+
+The project uses a GitHub Actions pipeline that:
+
+- Lints the code (`npm run lint`)
+- Runs a TypeScript type‑check (`npm run type-check`)
+- Executes unit tests (`npm run test`) against a test‑database
+- Executes Playwright end‑to‑end tests (`npm run test:e2e`)
+- Performs a security audit (`npm audit --audit-level=high`)
+- Builds the production bundle (`npm run build`)
+- Deploys automatically to Vercel on pushes to `main`
+
+Add the badge above to your README to surface CI status.
+
+---
