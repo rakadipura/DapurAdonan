@@ -64,7 +64,7 @@ export default async function BookingPage() {
             </Link>
             <h1 className="mt-4 text-3xl font-bold text-[#6b4a2b]">Booking Meja</h1>
             <p className="mt-2 text-base text-[#5a4a3a]">
-              Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni.
+               Pilih tanggal dan jam untuk makan bersama di Toko Mini Moni.
               Hanya tersedia hingga {String(maxPartySize)} orang per meja.
             </p>
           </header>
