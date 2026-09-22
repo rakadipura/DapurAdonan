@@ -6,6 +6,8 @@ import { getMaxPartySize, getBookingLeadHours, formatDateYMD, formatDateLong } f
 import { SessionProvider } from "@/components/customer/SessionProvider";
 import { BookingFlow } from "@/components/customer/booking/BookingFlow";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Booking Meja — Toko Mini Moni",
   description: "Book a table for Toko Mini Moni. Choose a date, time slot, and party size.",

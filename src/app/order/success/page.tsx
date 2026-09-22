@@ -5,6 +5,8 @@ import { getBooking } from "@/lib/bookings";
 import { formatRupiah } from "@/lib/money";
 import { formatRupiah as fmt } from "@/lib/money";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Pesan Berhasil — Toko Mini Moni",
 };

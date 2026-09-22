@@ -4,6 +4,8 @@ import { getBooking, getBookingDateOptions } from "@/lib/bookings";
 import { formatDateLong } from "@/lib/settings";
 import { RescheduleForm } from "@/components/customer/booking/RescheduleForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Status Booking — Toko Mini Moni",
 };

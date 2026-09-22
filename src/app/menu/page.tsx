@@ -7,6 +7,8 @@ import { OrderForm } from "@/components/customer/order/OrderForm";
 import { ProductCard } from "@/components/customer/order/ProductCard";
 import type { Product, ProductVariant, AddOn } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Toko Mini Moni — Roti, Kue, dan Jajanan Sehat",
   description:

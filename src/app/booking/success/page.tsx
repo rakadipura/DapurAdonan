@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getBooking } from "@/lib/bookings";
 import { formatRupiah } from "@/lib/money";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Booking Berhasil — Toko Mini Moni",
 };
