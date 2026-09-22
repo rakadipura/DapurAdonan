@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "build": "npm run version:gen && next build",
+    "build": "npm run version:gen && prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
