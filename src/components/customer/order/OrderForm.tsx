@@ -347,18 +347,35 @@ export function OrderForm({
                 </button>
               ))}
             </div>
-            {paymentMethod === "TRANSFER" && (
-              <div className="mt-2">
-                <label className="mb-1 block text-xs font-medium text-[#5a4a3a]">Bukti Transfer (URL)</label>
-                <input
-                  type="text"
-                  value={paymentProofUrl}
-                  onChange={(e) => setPaymentProofUrl(e.target.value)}
-                  placeholder="https://example.com/bukti.jpg"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
-                />
-              </div>
-            )}
+          {paymentMethod === "TRANSFER" && (
+            <div className="mt-2">
+              <label className="mb-1 block text-xs font-medium text-[#5a4a3a]">Bukti Transfer (Upload)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const form = new FormData();
+                  form.append('file', file);
+                  const res = await fetch('/api/payments/upload', {
+                    method: 'POST',
+                    body: form,
+                  });
+                  const data = await res.json();
+                  if (res.ok && data.url) {
+                    setPaymentProofUrl(data.url);
+                  } else {
+                    console.error('Upload failed', data);
+                  }
+                }}
+                className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+              />
+              {paymentProofUrl && (
+                <p className="mt-1 text-xs text-[#5a4a3a]">Uploaded: {paymentProofUrl}</p>
+              )}
+            </div>
+          )}
             {paymentMethod === "QRIS" && (
               <div className="mt-2 rounded-lg bg-[#FFF6E6] p-3 text-xs text-[#5a4a3a]">
                 QRIS akan ditampilkan setelah pesanan dikonfirmasi. Silakan scan menggunakan aplikasi e-wallet/banking Anda.
