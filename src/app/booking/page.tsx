@@ -51,6 +51,9 @@ export default async function BookingPage() {
     getBookingLeadHours(),
   ]);
 
+  // Add price field for compatibility with Product type
+  const productsWithPrice = products.map((p) => ({ ...p, price: p.basePrice }));
+
   // Pick tomorrow's date as the example / default for the form placeholder.
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -74,7 +77,7 @@ export default async function BookingPage() {
 
           <BookingFlow
             categories={categories}
-            products={products}
+            products={productsWithPrice}
             slots={slots}
             dateOptions={dateOptions}
             maxPartySize={maxPartySize}

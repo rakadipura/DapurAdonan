@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 const productSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
   slug: z.string().min(1, "Slug wajib diisi"),
-  description: z.string().optional(),
+  description: z.string().default(""),
   basePrice: z.number().int().min(0, "Harga minimal 0"),
   imageUrl: z.string().url().optional().or(z.literal("")),
   dailyStock: z.number().int().nullable().optional(),

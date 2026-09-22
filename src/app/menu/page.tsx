@@ -54,7 +54,9 @@ export default async function MenuPage() {
     }),
   ]);
 
-  const featuredProducts = products.slice(0, 4);
+  // Add price field for compatibility with Product type
+  const productsWithPrice = products.map((p) => ({ ...p, price: p.basePrice }));
+  const featuredProducts = productsWithPrice.slice(0, 4);
 
   return (
     <SessionProvider>
@@ -162,13 +164,13 @@ export default async function MenuPage() {
             ))}
           </div>
 
-          {products.length === 0 ? (
+          {productsWithPrice.length === 0 ? (
             <div className="rounded-xl border border-dashed border-[#e6c98a] bg-white/60 p-8 text-center text-sm text-[#5a4a3a]">
               Belum ada produk. Hubungi admin untuk menambahkan menu.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {products.map((product: Product & { variants?: ProductVariant[]; addOns?: AddOn[] }) => (
+              {productsWithPrice.map((product: Product & { variants?: ProductVariant[]; addOns?: AddOn[] }) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
@@ -179,7 +181,7 @@ export default async function MenuPage() {
         <section className="bg-[#fffaf0] px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
           <div className="mx-auto max-w-3xl">
             <OrderForm
-              products={products}
+              products={productsWithPrice}
               categories={categories}
               settings={settings}
               featuredOrders={todayOrders.map((o: { code: string; customerName: string; total: number; status: string }) => ({
