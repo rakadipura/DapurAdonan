@@ -244,7 +244,7 @@ export function BookingFlow({
         {step === "details" && (
           <div>
             <h2 className="mb-3 text-lg font-semibold text-[#6b4a2b]">
-              Pilih Waktu & Jumlah Orang
+               Pilih Jam & Jumlah Orang
             </h2>
 
             <p className="mb-3 text-sm text-[#5a4a3a]">
