@@ -3,6 +3,8 @@ import { getOrders, getOrderStats } from "@/lib/orders";
 import { getTodayBookings, getBookingStats } from "@/lib/bookings";
 import { formatRupiah } from "@/lib/money";
 
+export const dynamic = "force-dynamic";
+
 const ORDER_STATUS_LABELS: Record<string, string> = {
   PENDING: "Menunggu konfirmasi",
   CONFIRMED: "Dikonfirmasi",
