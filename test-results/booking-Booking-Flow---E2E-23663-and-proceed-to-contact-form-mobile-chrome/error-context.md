@@ -12,99 +12,55 @@
 # Error details
 
 ```
-Test timeout of 30000ms exceeded.
-```
-
-```
-Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
 Call log:
-  - waiting for locator('.grid button') to be visible
+  - waiting for locator('text=meja tersedia') to be visible
 
 ```
 
 # Page snapshot
 
 ```yaml
-- generic:
-  - generic [active]:
-    - generic [ref=e3]:
-      - generic [ref=e4]:
-        - navigation [ref=e6]:
-          - button [disabled] [ref=e7]:
-            - img "previous" [ref=e8]
-          - generic [ref=e10]:
-            - generic [ref=e11]: 1/
-            - generic [ref=e12]: "1"
-          - button [disabled] [ref=e13]:
-            - img "next" [ref=e14]
-        - generic [ref=e17]:
-          - generic "Latest available version is detected (16.3.5)." [ref=e20]: Next.js 16.3.5
-          - generic [ref=e21]: Turbopack
-      - dialog "Build Error" [ref=e23]:
-        - generic [ref=e26]:
-          - generic [ref=e28]:
-            - generic [ref=e29]:
-              - generic [ref=e30]: Build Error
-              - generic [ref=e32]:
-                - button "Copy Error Info" [ref=e33] [cursor=pointer]
-                - button "No related documentation found" [disabled] [ref=e36]
-                - button "Attach Node.js inspector" [ref=e39] [cursor=pointer]
-            - generic [ref=e48]: Export createBooking doesn't exist in target module
-          - generic [ref=e51]:
-            - generic [ref=e53]:
-              - generic [ref=e59]: ./src/app/api/bookings/route.ts (2:1)
-              - button "Open in editor" [ref=e60] [cursor=pointer]
-            - generic [ref=e65]:
-              - text: Error
-              - generic [ref=e66]: ": Export"
-              - text: createBooking
-              - generic [ref=e67]: doesn't exist in target module
-              - generic [ref=e68]: 1 |
-              - text: import
-              - generic [ref=e69]: "{"
-              - text: NextRequest
-              - generic [ref=e70]: ","
-              - text: NextResponse
-              - generic [ref=e71]: "}"
-              - text: from "next/server"
-              - generic [ref=e72]: ;
-              - text: ">"
-              - generic [ref=e73]: 2 |
-              - text: import
-              - generic [ref=e74]: "{ createBooking, getBooking }"
-              - text: from "@/lib/bookings"
-              - generic [ref=e75]: ;
-              - generic [ref=e76]: "|"
-              - text: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-              - generic [ref=e77]: 3 |
-              - text: import
-              - generic [ref=e78]: "{ createBookingSchema }"
-              - text: from "@/validations/bookings"
-              - generic [ref=e79]: ;
-              - generic [ref=e80]: 4 |
-              - text: import
-              - generic [ref=e81]: "{ revalidatePath }"
-              - text: from "next/cache"
-              - generic [ref=e82]: ;
-              - generic [ref=e83]: 5 |
-              - text: import
-              - generic [ref=e84]: "{ normalizePhone }"
-              - text: from "@/lib/regex"
-              - generic [ref=e85]: ; The export
-              - text: createBooking
-              - generic [ref=e86]: was not found in module
-              - generic [ref=e87]: "[project]/src/lib/bookings.ts [app-route] (ecmascript)"
-              - generic [ref=e88]: . Did you mean to import
-              - text: getBooking
-              - generic [ref=e89]: "? All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist."
-    - generic [ref=e94] [cursor=pointer]:
-      - button "Open Next.js Dev Tools" [ref=e95]
-      - button "Open issues overlay" [ref=e100]:
-        - generic [ref=e101]:
-          - generic [aria-hidden] [ref=e102]: "0"
-          - generic [ref=e103]: "1"
-        - generic [ref=e104]: Issue
-  - alert [ref=e105]
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - link "← Kembali ke Toko Mini Moni" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - heading "Booking Meja" [level=1] [ref=e6]
+      - paragraph [ref=e7]: Pilih tanggal dan waktu untuk makan bersama di Toko Mini Moni. Hanya tersedia hingga 8 orang per meja.
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: ✓
+        - generic [ref=e12]: ✓
+        - generic [ref=e14]: "3"
+      - button "Kembali" [ref=e16]
+      - generic [ref=e20]:
+        - heading "Pilih Waktu & Jumlah Orang" [level=2] [ref=e21]
+        - paragraph [ref=e22]: "Tanggal: 2026-09-23"
+        - generic [ref=e23]:
+          - generic [ref=e24]: Waktu
+          - generic [ref=e25]:
+            - button "Pagi · 09:00 – 11:00 Penuh" [disabled] [ref=e26]:
+              - generic [ref=e27]:
+                - generic [ref=e28]: Pagi · 09:00 – 11:00
+                - generic [ref=e29]: Penuh
+            - button "Siang · 12:00 – 14:00 2 kursi tersedia" [ref=e30]:
+              - generic [ref=e31]:
+                - generic [ref=e32]: Siang · 12:00 – 14:00
+                - generic [ref=e33]: 2 kursi tersedia
+            - button "Sore · 15:00 – 17:00 4 kursi tersedia" [ref=e34]:
+              - generic [ref=e35]:
+                - generic [ref=e36]: Sore · 15:00 – 17:00
+                - generic [ref=e37]: 4 kursi tersedia
+        - generic [ref=e38]:
+          - generic [ref=e39]: Jumlah orang (2)
+          - generic [ref=e40]:
+            - button "−" [ref=e41]
+            - generic [ref=e42]: "2"
+            - button "+" [ref=e43]
+          - paragraph [ref=e44]: Maksimal 8 orang per meja.
+  - button "Open Next.js Dev Tools" [ref=e50] [cursor=pointer]
+  - alert [ref=e54]
 ```
 
 # Test source
@@ -148,13 +104,13 @@ Call log:
   36  |   });
   37  | 
   38  |   test('can select slot and proceed to contact form', async ({ page }) => {
-> 39  |     await page.waitForSelector('.grid button');
-      |                ^ Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+  39  |     await page.waitForSelector('.grid button');
   40  |     const firstDateButton = page.locator('.grid button').first();
   41  |     await firstDateButton.click();
   42  |     
   43  |     // Wait for slots to load
-  44  |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
+> 44  |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
+      |                ^ TimeoutError: page.waitForSelector: Timeout 5000ms exceeded.
   45  |     
   46  |     // Click first available slot
   47  |     const availableSlot = page.locator('text=meja tersedia').first().locator('..').locator('..');
@@ -250,4 +206,9 @@ Call log:
   137 |     await expect(plusButton).toBeDisabled();
   138 |   });
   139 | 
+  140 |   test('shows booking summary on confirm step', async ({ page }) => {
+  141 |     await page.waitForSelector('.grid button');
+  142 |     await page.locator('.grid button').first().click();
+  143 |     await page.waitForSelector('text=meja tersedia', { timeout: 5000 });
+  144 |     await page.locator('text=meja tersedia').first().locator('..').locator('..').click();
 ```

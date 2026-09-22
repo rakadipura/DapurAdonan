@@ -85,6 +85,28 @@ The project uses a GitHub Actions pipeline that:
 - Builds the production bundle (`npm run build`)
 - Deploys automatically to Vercel on pushes to `main`
 
+**Running CI locally**
+
+```bash
+# Install dependencies
+npm ci
+
+# Lint
+npm run lint
+
+# Type‑check
+npm run type-check
+
+# Unit tests
+npm run test
+
+# End‑to‑end tests (requires Playwright browsers)
+npm run test:e2e
+
+# Security audit
+npm audit --audit-level=high
+```
+
 Add the badge above to your README to surface CI status.
 
 ---

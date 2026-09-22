@@ -12,13 +12,12 @@
 # Error details
 
 ```
-SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+TypeError: Cannot destructure property 'code' of 'data.booking' as it is undefined.
 ```
 
 # Test source
 
 ```ts
-  173 |   });
   174 | });
   175 | 
   176 | test.describe('Booking API', () => {
@@ -118,9 +117,9 @@ SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
   270 |       },
   271 |     });
   272 |     
-> 273 |     const data = await createResponse.json();
-      |                  ^ SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
-  274 |     const { code, phone } = data.booking;
+  273 |     const data = await createResponse.json();
+> 274 |     const { code, phone } = data.booking;
+      |             ^ TypeError: Cannot destructure property 'code' of 'data.booking' as it is undefined.
   275 |     
   276 |     // Visit status page
   277 |     await page.goto(`/booking/status?code=${code}&phone=${phone}`);
