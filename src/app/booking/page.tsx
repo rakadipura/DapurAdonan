@@ -2,19 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getAvailableSlots, getBookingDateOptions } from "@/lib/bookings";
-import { getBookingLeadHours, formatDateYMD, formatDateLong } from "@/lib/settings";
+import { getBookingLeadHours, formatDateYMD } from "@/lib/settings";
+import { getCustomerFacingSettings } from "@/lib/settings";
 import { SessionProvider } from "@/components/customer/SessionProvider";
 import { BookingFlow } from "@/components/customer/booking/BookingFlow";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Booking Meja — Toko Mini Moni",
-  description: "Book a table for Toko Mini Moni. Choose a date, time slot, and party size.",
-};
-
 export default async function BookingPage() {
-  const [categories, products, slots, dateOptions, leadHours] = await Promise.all([
+  const [categories, products, slots, dateOptions, leadHours, settings] = await Promise.all([
     prisma.category.findMany({
       where: { isVisible: true },
       orderBy: { sortOrder: "asc" },
@@ -42,6 +38,7 @@ export default async function BookingPage() {
     }),
     getBookingDateOptions(14),
     getBookingLeadHours(),
+    getCustomerFacingSettings(),
   ]);
 
   // Add price field for compatibility with Product type
@@ -59,11 +56,11 @@ export default async function BookingPage() {
           {/* Header */}
           <header className="mb-8">
             <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
-              ← Kembali ke Toko Mini Moni
+              ← Kembali ke {settings.storeName}
             </Link>
             <h1 className="mt-4 text-3xl font-bold text-[#6b4a2b]">Booking Meja</h1>
             <p className="mt-2 text-base text-[#5a4a3a]">
-              Pilih tanggal dan jam untuk makan bersama di Toko Mini Moni.
+              Pilih tanggal dan jam untuk makan bersama di {settings.storeName}.
             </p>
           </header>
 

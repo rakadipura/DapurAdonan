@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface RescheduleFormProps {
   booking: { code: string; phone: string; slotId: number; partySize: number };
@@ -23,16 +24,17 @@ export function RescheduleForm({ booking, dateOptions }: RescheduleFormProps) {
     if (!date) return;
     try {
       const res = await fetch(`/api/bookings/slots?date=${date}`);
+      if (!res.ok) throw new Error("Failed to load slots");
       const data = await res.json();
       setSlots(data.slots || []);
     } catch {
-      setError("Gagal memuat jadwal");
+      setError("Gagal memuat jadwal. Coba refresh halaman.");
     }
   };
 
   const handleReschedule = async () => {
     if (!newDate || !newSlotId) {
-      setError("Pilih tanggal dan waktu baru");
+      setError("Pilih tanggal dan waktu baru terlebih dahulu");
       return;
     }
     setLoading(true);
@@ -45,14 +47,14 @@ export function RescheduleForm({ booking, dateOptions }: RescheduleFormProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Gagal menjadwal ulang");
+        setError(data.error ?? "Gagal menjadwal ulang. Coba lagi.");
         setLoading(false);
         return;
       }
-      alert("Booking dijadwal ulang");
+      toast.success("Booking berhasil dijadwal ulang");
       window.location.reload();
     } catch {
-      setError("Terjadi kesalahan");
+      setError("Terjadi kesalahan jaringan. Periksa koneksi dan coba lagi.");
       setLoading(false);
     }
   };

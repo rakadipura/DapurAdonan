@@ -263,15 +263,21 @@ async function main() {
 
   // ---- Settings ----
   const settingEntries = [
-    { key: "orderCutoffHour", value: "16" }, // last order for next day at 16:00 WIB
-    { key: "bookingLeadHours", value: "1" }, // bookings open at least 1h ahead
+    { key: "orderCutoffHour", value: "16" },
+    { key: "bookingLeadHours", value: "1" },
     { key: "transferBank", value: "Bank BCA<br>Kategori: Toko Mini Moni<br>No. Rekening: 123-456-7890<br>Atas nama: Toko Mini Moni" },
     { key: "pickupWindows", value: JSON.stringify([{ start: "10:00", end: "12:00" }, { start: "12:00", end: "14:00" }, { start: "15:00", end: "17:00" }, { start: "17:00", end: "18:30" }]) },
     { key: "deliveryZones", value: JSON.stringify([
       { zone: "Lokal", baseFee: 15000, perKm: 5000, maxKm: 10, freeMin: 80000 },
     ]) },
     { key: "adminPasswordHash", value: "REPLACE_WITH_BCRYPT_HASH" },
-    { key: "waNumber", value: "6281234567890" }, // WhatsApp number for confirmations
+    { key: "waNumber", value: "6281234567890" },
+    // Branding settings
+    { key: "storeName", value: "Toko Mini Moni" },
+    { key: "storeTagline", value: "Roti, Kue, dan Jajanan Sehat" },
+    { key: "logoUrl", value: "/images/logo.svg" },
+    { key: "faviconUrl", value: "/favicon.ico" },
+    { key: "heroImageUrl", value: "/images/hero-banner.svg" },
   ];
 
   for (const entry of settingEntries) {

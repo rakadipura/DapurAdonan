@@ -166,7 +166,8 @@ export function BookingFlow({
         setSuccess({ code: data.booking.code, phone: data.booking.phone });
         router.push(data.redirectUrl);
       } catch (err) {
-        setError("Terjadi kesalahan. Coba lagi.");
+        console.error("Booking error:", err);
+        setError("Terjadi kesalahan jaringan. Periksa koneksi dan coba lagi.");
       }
     });
   };

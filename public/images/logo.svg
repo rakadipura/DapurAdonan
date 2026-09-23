@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A0522D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B4513;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#gradient)"/>
+  <text x="60" y="72" font-family="Georgia, serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">TM</text>
+  <ellipse cx="60" cy="95" rx="30" ry="8" fill="rgba(255,255,255,0.2)"/>
+</svg>

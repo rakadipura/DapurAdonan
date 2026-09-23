@@ -175,17 +175,52 @@ export async function getWhatsAppNumber(): Promise<string> {
   return raw || "6281234567890";
 }
 
+export async function getStoreName(): Promise<string> {
+  const raw = await getRaw("storeName");
+  return raw || "Toko Mini Moni";
+}
+
+export async function getStoreTagline(): Promise<string> {
+  const raw = await getRaw("storeTagline");
+  return raw || "Roti, Kue, dan Jajanan Sehat";
+}
+
+export async function getLogoUrl(): Promise<string> {
+  const raw = await getRaw("logoUrl");
+  return raw || "/images/logo.svg";
+}
+
+export async function getFaviconUrl(): Promise<string> {
+  const raw = await getRaw("faviconUrl");
+  return raw || "/favicon.ico";
+}
+
+export async function getHeroImageUrl(): Promise<string> {
+  const raw = await getRaw("heroImageUrl");
+  return raw || "/images/hero-banner.svg";
+}
+
 export async function getCustomerFacingSettings(): Promise<{
   pickupWindows: PickupWindow[];
   deliveryZones: DeliveryZone[];
   transferInfo: string | null;
   waNumber: string;
+  storeName: string;
+  storeTagline: string;
+  logoUrl: string;
+  faviconUrl: string;
+  heroImageUrl: string;
 }> {
-  const [windows, zones, transferInfo, waNumber] = await Promise.all([
+  const [windows, zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl] = await Promise.all([
     getPickupWindows(),
     getDeliveryZones(),
     getTransferInfo(),
     getWhatsAppNumber(),
+    getStoreName(),
+    getStoreTagline(),
+    getLogoUrl(),
+    getFaviconUrl(),
+    getHeroImageUrl(),
   ]);
-  return { pickupWindows: windows, deliveryZones: zones, transferInfo, waNumber };
+  return { pickupWindows: windows, deliveryZones: zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl };
 }

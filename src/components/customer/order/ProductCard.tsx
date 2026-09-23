@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatRupiah } from "@/lib/money";
 import { useSession } from "@/components/customer/SessionProvider";
+import { toast } from "sonner";
 import type { Product, ProductVariant, AddOn, CartItem } from "@/types";
 
 interface ProductCardProps {
@@ -42,7 +43,7 @@ export function ProductCard({ product }: ProductCardProps) {
     const requiredAddOns = product.addOns?.filter((a) => a.isRequired) ?? [];
     const missingRequired = requiredAddOns.filter((a) => !selectedAddOns.has(a.id));
     if (missingRequired.length > 0) {
-      alert(`Pilih add-on wajib: ${missingRequired.map((a) => a.name).join(", ")}`);
+      toast.error(`Pilih add-on wajib: ${missingRequired.map((a) => a.name).join(", ")}`);
       return;
     }
 

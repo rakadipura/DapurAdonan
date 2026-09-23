@@ -9,12 +9,6 @@ import type { Product, ProductVariant, AddOn } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Toko Mini Moni — Roti, Kue, dan Jajanan Sehat",
-  description:
-    "Toko Mini Moni menyediakan roti tawar, kue kering, ronde kue, dan minuman segar. Pesan untuk diambil atau dikirim.",
-};
-
 export default async function MenuPage() {
   const [categories, products, settings, todayOrders] = await Promise.all([
     prisma.category.findMany({
@@ -67,8 +61,11 @@ export default async function MenuPage() {
         <header className="sticky top-0 z-30 bg-[#fffaf0]/95 backdrop-blur border-b border-[#efe2c7]">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
             <Link href="/" className="flex items-center gap-2">
+              {settings.logoUrl && (
+                <img src={settings.logoUrl} alt={settings.storeName} className="h-8 w-auto" />
+              )}
               <span className="text-xl font-semibold tracking-tight text-[#6b4a2b]">
-                Toko Mini Moni
+                {settings.storeName}
               </span>
             </Link>
             <nav className="flex gap-4 text-sm font-medium text-[#6b4a2b]">
@@ -88,12 +85,21 @@ export default async function MenuPage() {
         {/* Hero */}
         <section className="relative bg-[#FDF6E3] overflow-hidden">
           <div className="mx-auto max-w-6xl px-4 pb-10 pt-12 sm:px-6 sm:pt-20">
+            {settings.heroImageUrl && (
+              <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
+                <img
+                  src={settings.heroImageUrl}
+                  alt={settings.storeName}
+                  className="w-full h-64 object-cover"
+                />
+              </div>
+            )}
             <div className="max-w-2xl">
               <span className="mb-2 inline-block rounded-full border border-[#e6c98a] bg-[#fff] px-3 py-0.5 text-xs font-medium text-[#A0522D] uppercase tracking-wider">
                 Selamat datang
               </span>
               <h1 className="mb-4 text-3xl font-bold leading-tight text-[#6b4a2b] sm:text-5xl">
-                Jajanan Kue, Roti, dan Minuman
+                {settings.storeTagline}
                 <br />
                 <span className="text-[#A0522D]">Kualitas Handmade</span>
               </h1>

@@ -103,7 +103,8 @@ export function OrderForm({
 
         window.location.href = data.redirectUrl as string;
       } catch (err) {
-        setOrderError("Terjadi kesalahan. Coba lagi.");
+        console.error("Order error:", err);
+        setOrderError("Terjadi kesalahan jaringan. Periksa koneksi dan coba lagi.");
       }
     });
     }, [state.cart, contact, orderType, pickupDate, pickupWindow, deliveryAddress, deliveryZone, paymentMethod, paymentProofUrl, notes, clearCart, products, hasCustomCake]);

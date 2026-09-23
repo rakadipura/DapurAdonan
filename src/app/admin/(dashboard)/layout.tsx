@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getStoreName } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Admin — Toko Mini Moni",
@@ -11,12 +12,14 @@ export const metadata: Metadata = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   if (!(await isAdminAuthenticated())) redirect("/admin/login");
 
+  const storeName = await getStoreName();
+
   return (
     <div className="min-h-screen bg-[#fffaf0]">
       <header className="border-b border-[#efe2c7] bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-6">
-            <span className="font-bold text-[#6b4a2b]">Toko Mini Moni — Admin</span>
+            <span className="font-bold text-[#6b4a2b]">{storeName} — Admin</span>
             <nav className="flex gap-4 text-sm font-medium text-[#5a4a3a] flex-wrap">
               <Link href="/admin" className="hover:text-[#A0522D]">Dashboard</Link>
               <Link href="/admin/orders" className="hover:text-[#A0522D]">Pesanan</Link>
