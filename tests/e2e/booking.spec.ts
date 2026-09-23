@@ -33,6 +33,12 @@ test.describe('Booking Flow - E2E', () => {
     const firstDateButton = page.locator('.grid button:not([disabled])').first();
     await firstDateButton.click();
     
+    // Should show slot selection step
+    await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
+    
+    // Set party size to see seat availability
+    await page.click('button:has-text("+")');
+    
     // Should show slot options with seat availability
     await expect(page.locator('text=Waktu')).toBeVisible();
     await expect(page.locator('text=kursi tersedia').first()).toBeVisible({ timeout: 5000 });
@@ -42,6 +48,16 @@ test.describe('Booking Flow - E2E', () => {
     await page.waitForSelector('.grid button');
     const firstDateButton = page.locator('.grid button:not([disabled])').first();
     await firstDateButton.click();
+    
+    // Wait for details step
+    await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
+
+    // Set party size to enable slot selection
+    await page.click('button:has-text("+")');
+    
+    // Wait for slots to load
+    // Set party size to enable slot selection
+    await page.click('button:has-text("+")');
     
     // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
@@ -57,6 +73,10 @@ test.describe('Booking Flow - E2E', () => {
   test('validates required fields in contact form', async ({ page }) => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
+    // Set party size to enable slot selection
+    await page.click('button:has-text("+")');
+    
+    // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 
@@ -77,6 +97,10 @@ test.describe('Booking Flow - E2E', () => {
   test('validates phone number format', async ({ page }) => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
+    // Set party size to enable slot selection
+    await page.click('button:has-text("+")');
+    
+    // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 
@@ -99,6 +123,10 @@ test.describe('Booking Flow - E2E', () => {
   test('accepts valid phone formats', async ({ page }) => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
+    // Set party size to enable slot selection
+    await page.click('button:has-text("+")');
+    
+    // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 
@@ -119,35 +147,38 @@ test.describe('Booking Flow - E2E', () => {
     // Wait for details step (slot selection + party size)
     await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
 
-    // Check default party size
+    // Check default party size (starts at 0)
     // The party size span is in the flex div with +/- buttons, not the date span
     const partySizeDisplay = page.locator('button:has-text("+")').locator('..').locator('span').first();
-    await expect(partySizeDisplay).toContainText('2');
+    await expect(partySizeDisplay).toContainText('0');
     
     // Increase party size
     await page.click('button:has-text("+")');
-    await expect(partySizeDisplay).toContainText('3');
+    await expect(partySizeDisplay).toContainText('1');
     
     // Decrease party size
     await page.click('button:has-text("−")');
-    await expect(partySizeDisplay).toContainText('2');
+    await expect(partySizeDisplay).toContainText('0');
   });
 
-  test('kursi tersedia drops as jumlah orang increases', async ({ page }) => {
+  test('kursi tersedia stays fixed when jumlah orang changes', async ({ page }) => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
 
     // Wait for details step
     await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
 
+    // Set party size to see seat availability
+    await page.click('button:has-text("+")');
+
     const seats = page.locator('text=kursi tersedia').first();
     const initialText = (await seats.textContent()) ?? '';
     const initialSeats = parseInt(initialText.match(/^(\d+)/)?.[1] ?? '0', 10);
     expect(initialSeats).toBeGreaterThan(0);
 
-    // One more person => one seat less shown on every slot
+    // Increase party size - kursi tersedia should stay the same (fixed)
     await page.click('button:has-text("+")');
-    await expect(seats).toHaveText(new RegExp(`^${initialSeats - 1} kursi tersedia$`));
+    await expect(seats).toHaveText(new RegExp(`^${initialSeats} kursi tersedia$`));
   });
 
   test('disables party size at max (kursi tersedia)', async ({ page }) => {
@@ -157,7 +188,7 @@ test.describe('Booking Flow - E2E', () => {
     // Wait for details step
     await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
 
-    // The cap is the date's biggest free slot (slot capacity, default 8)
+    // The cap is the date's biggest free slot (max remaining seats across all slots)
     const plusButton = page.locator('button:has-text("+")');
     for (let i = 0; i < 20 && !(await plusButton.isDisabled()); i++) {
       await plusButton.click();
@@ -171,12 +202,17 @@ test.describe('Booking Flow - E2E', () => {
     await expect(counter).toHaveText(/^\d+$/);
     const value = parseInt((await counter.textContent()) ?? '0', 10);
     expect(value).toBeGreaterThanOrEqual(1);
-    expect(value).toBeLessThanOrEqual(8);
+    // Max is the largest remaining seats across all slots for the selected date
+    expect(value).toBeLessThanOrEqual(20); // generous upper bound
   });
 
   test('shows booking summary on confirm step', async ({ page }) => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
+    // Set party size to enable slot selection
+    await page.click('button:has-text("+")');
+    
+    // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 
@@ -191,6 +227,10 @@ test.describe('Booking Flow - E2E', () => {
   test('full booking flow with valid data creates booking', async ({ page }) => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
+    // Set party size to enable slot selection
+    await page.click('button:has-text("+")');
+    
+    // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 

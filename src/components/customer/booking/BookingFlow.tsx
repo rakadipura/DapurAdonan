@@ -49,7 +49,7 @@ export function BookingFlow({
   const [step, setStep] = useState<"date" | "details" | "confirm">("date");
   const [selectedDate, setSelectedDate] = useState(defaultDate);
   const [selectedSlot, setSelectedSlot] = useState<SlotAvailability | null>(null);
-  const [partySize, setPartySize] = useState(2);
+  const [partySize, setPartySize] = useState(0);
   const [contact, setContactLocal] = useState<CustomerType>({ name: "", phone: "", email: "" });
   const [availableSlots, setAvailableSlots] = useState<SlotAvailability[]>([]);
   const [isSubmitting, startTransition] = useTransition();
@@ -57,12 +57,10 @@ export function BookingFlow({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ code: string; phone: string } | null>(null);
 
-  // Seats still bookable across the visible slots. "Jumlah orang" is capped
-  // by the date's "kursi tersedia" (each slot's capacity is maintained per
-  // slot from the admin panel), and the current value is subtracted directly
-  // from the seat count shown on every slot.
+  // "Jumlah orang" is capped by the slot's remaining seats.
+  // Show fixed remaining seats per slot; don't subtract party size from display.
   const maxSeats = availableSlots.reduce((max, s) => Math.max(max, s.remaining), 0);
-  const effPartySize = maxSeats > 0 ? Math.min(partySize, maxSeats) : partySize;
+  const effPartySize = partySize;
 
   // Initialize availableSlots from props on mount
   useEffect(() => {
@@ -125,6 +123,10 @@ export function BookingFlow({
     }
     if (!selectedSlot) {
       setError("Pilih jadwal dahulu");
+      return;
+    }
+    if (effPartySize === 0) {
+      setError("Jumlah orang minimal 1");
       return;
     }
     if (selectedSlot.remaining < effPartySize) {
@@ -267,8 +269,7 @@ export function BookingFlow({
                   </div>
                 ) : (
                   availableSlots.map((slot) => {
-                    const seatsAfter = slot.remaining - effPartySize;
-                    const disabled = slot.remaining < effPartySize;
+                    const disabled = partySize === 0 || partySize > slot.remaining;
                     return (
                         <button
                           key={slot.id}
@@ -289,8 +290,10 @@ export function BookingFlow({
                                 {disabled
                                   ? slot.remaining < 1
                                     ? 'Penuh'
-                                    : 'Hanya ' + slot.remaining + ' kursi'
-                                  : seatsAfter + ' kursi tersedia'}
+                                    : partySize === 0
+                                      ? 'Pilih jumlah orang dulu'
+                                      : 'Jumlah orang melebihi kapasitas'
+                                  : slot.remaining + ' kursi tersedia'}
                               </span>
                             </>
                           </button>
@@ -310,8 +313,8 @@ export function BookingFlow({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  disabled={effPartySize <= 1}
-                  onClick={() => setPartySize(Math.max(1, effPartySize - 1))}
+                  disabled={effPartySize <= 0}
+                  onClick={() => setPartySize(Math.max(0, effPartySize - 1))}
                   className="h-8 w-8 rounded-full border border-[#e6c98a] bg-white flex items-center justify-center text-sm font-medium text-[#6b4a2b] hover:bg-[#fff6e6] disabled:opacity-40"
                 >
                   −
