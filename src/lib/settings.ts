@@ -1,5 +1,4 @@
 import { prisma } from "./db";
-import type { CustomerType } from "@/types";
 
 
 export interface PickupWindow {
@@ -42,12 +41,6 @@ export async function getDeliveryZones(): Promise<DeliveryZone[]> {
 
 export async function getTransferInfo(): Promise<string | null> {
   return getRaw("transferBank");
-}
-
-export async function getMaxPartySize(): Promise<number> {
-  const raw = await getRaw("maxPartySize");
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : 8;
 }
 
 export async function getOrderCutoffHour(): Promise<number> {
@@ -139,6 +132,44 @@ export function fromWIBString(isoDate: string): Date {
   return new Date(isoDate + "T00:00:00+07:00");
 }
 
+/**
+ * Parse a YYYY-MM-DD calendar date to **UTC midnight** of that day.
+ *
+ * This is the representation for `@db.Date` columns (Booking.date,
+ * Order.pickupDate): Prisma serializes a Date into a date column using its
+ * UTC calendar day, so the WIB-midnight instant from `fromWIBString`
+ * ("D T00:00+07:00") gets stored as D-1 — one day earlier than the day the
+ * customer picked. Keep `fromWIBString` for real instants only (e.g.
+ * `createdAt` range filters); use this for calendar dates.
+ */
+export function parseYMD(ymd: string): Date {
+  return new Date(`${ymd}T00:00:00.000Z`);
+}
+
+/** Shift a YYYY-MM-DD string by whole days (timezone-independent). */
+export function addDaysToYMD(ymd: string, days: number): string {
+  const d = new Date(`${ymd}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return formatDateYMD(d);
+}
+
+/** Whole days from `a` to `b` (b - a) for YYYY-MM-DD strings. */
+export function daysBetweenYMD(a: string, b: string): number {
+  return Math.round(
+    (Date.parse(`${b}T00:00:00.000Z`) - Date.parse(`${a}T00:00:00.000Z`)) / 86_400_000,
+  );
+}
+
+/** Today's calendar date in WIB (YYYY-MM-DD), timezone-independent. */
+export function wibToday(): string {
+  return formatDateYMD(toWIB(new Date()));
+}
+
+/** Tomorrow's calendar date in WIB (YYYY-MM-DD), timezone-independent. */
+export function wibTomorrow(): string {
+  return addDaysToYMD(wibToday(), 1);
+}
+
 export async function getWhatsAppNumber(): Promise<string> {
   const raw = await getRaw("waNumber");
   return raw || "6281234567890";
@@ -147,16 +178,14 @@ export async function getWhatsAppNumber(): Promise<string> {
 export async function getCustomerFacingSettings(): Promise<{
   pickupWindows: PickupWindow[];
   deliveryZones: DeliveryZone[];
-  maxPartySize: number;
   transferInfo: string | null;
   waNumber: string;
 }> {
-  const [windows, zones, maxPartySize, transferInfo, waNumber] = await Promise.all([
+  const [windows, zones, transferInfo, waNumber] = await Promise.all([
     getPickupWindows(),
     getDeliveryZones(),
-    getMaxPartySize(),
     getTransferInfo(),
     getWhatsAppNumber(),
   ]);
-  return { pickupWindows: windows, deliveryZones: zones, maxPartySize, transferInfo, waNumber };
+  return { pickupWindows: windows, deliveryZones: zones, transferInfo, waNumber };
 }

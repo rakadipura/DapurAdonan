@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBookings, getBookingStats, BOOKING_STATUSES, type BookingStatus } from "@/lib/bookings";
+import { isAdminAuthenticated, adminUnauthorized } from "@/lib/admin-auth";
 
 export async function GET(req: NextRequest) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const scope = req.nextUrl.searchParams.get("scope") === "all" ? "all" : "today";
   const statusParam = req.nextUrl.searchParams.get("status");
   const status = BOOKING_STATUSES.includes(statusParam as BookingStatus)

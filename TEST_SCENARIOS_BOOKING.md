@@ -57,8 +57,9 @@ Booking flow consists of 3 steps:
 | Scenario | Steps | Expected |
 |----------|-------|----------|
 | Min size | Click - until 1 | Min 1 person |
-| Max size | Click + until maxPartySize | Max limited by setting (default 8) |
-| Invalid size | Try > maxPartySize | Button disabled at max |
+| Max size | Click + until max | Stops at the date's max "kursi tersedia" (slot capacity, default 8) |
+| Invalid size | Try > kursi tersedia | Button disabled at max |
+| Seats display | Change jumlah orang | Slot "kursi tersedia" drops by the same amount |
 
 ---
 
@@ -83,7 +84,7 @@ Booking flow consists of 3 steps:
 | Past date | 400, "Tanggal booking harus hari ini atau setelahnya" |
 | Invalid slotId | 400, "Jadwal tidak tersedia" |
 | Party size > capacity | 400, "Jadwal penuh; hanya tersisa X orang" |
-| Party size > maxPartySize | 400, "Jumlah orang melebihi batas maksimum (X)" |
+| Party size > slot capacity | 400, "Jumlah orang melebihi kapasitas jadwal (X)" |
 | Invalid phone | 400, "Nomor telepon tidak valid" |
 | Missing fields | 400, Zod validation errors |
 
@@ -152,7 +153,6 @@ await prisma.bookingSlot.createMany({
 // Settings
 await prisma.setting.createMany({
   data: [
-    { key: 'maxPartySize', value: '8' },
     { key: 'bookingLeadHours', value: '1' },
     { key: 'whatsAppNumber', value: '6281234567890' },
   ],

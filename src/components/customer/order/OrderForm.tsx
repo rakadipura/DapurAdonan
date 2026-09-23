@@ -11,7 +11,6 @@ interface OrderFormProps {
   settings: {
     pickupWindows: PickupWindow[];
     deliveryZones: DeliveryZone[];
-    maxPartySize: number;
     transferInfo: string | null;
     waNumber: string;
   };
@@ -46,6 +45,8 @@ export function OrderForm({
   const [deliveryZone, setDeliveryZone] = useState(settings.deliveryZones[0]?.zone ?? "");
   const [paymentMethod, setPaymentMethod] = useState<"TRANSFER" | "EWALLET" | "CASH" | "QRIS">("CASH");
   const [paymentProofUrl, setPaymentProofUrl] = useState<string>("");
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [proofError, setProofError] = useState("");
   const [notes, setNotes] = useState("");
 
   const availableWindows = settings.pickupWindows;
@@ -356,23 +357,47 @@ export function OrderForm({
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  const form = new FormData();
-                  form.append('file', file);
-                  const res = await fetch('/api/payments/upload', {
-                    method: 'POST',
-                    body: form,
-                  });
-                  const data = await res.json();
-                  if (res.ok && data.url) {
-                    setPaymentProofUrl(data.url);
-                  } else {
-                    console.error('Upload failed', data);
+                  setProofError("");
+                  if (file.size > 5 * 1024 * 1024) {
+                    setProofError("Ukuran file maksimal 5 MB");
+                    e.target.value = "";
+                    return;
+                  }
+                  setUploadingProof(true);
+                  try {
+                    const form = new FormData();
+                    form.append('file', file);
+                    const res = await fetch('/api/payments/upload', {
+                      method: 'POST',
+                      body: form,
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.url) {
+                      setPaymentProofUrl(data.url);
+                    } else {
+                      setProofError(data.error ?? "Upload gagal. Coba lagi.");
+                    }
+                  } catch {
+                    setProofError("Upload gagal. Periksa koneksi Anda.");
+                  } finally {
+                    setUploadingProof(false);
                   }
                 }}
                 className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
               />
+              {uploadingProof && (
+                <p className="mt-1 text-xs text-[#5a4a3a]">Mengunggah…</p>
+              )}
+              {proofError && (
+                <p className="mt-1 text-xs text-red-600">{proofError}</p>
+              )}
               {paymentProofUrl && (
-                <p className="mt-1 text-xs text-[#5a4a3a]">Uploaded: {paymentProofUrl}</p>
+                <p className="mt-1 text-xs text-[#5a4a3a]">
+                  Terunggah:{" "}
+                  <a href={paymentProofUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                    lihat bukti
+                  </a>
+                </p>
               )}
             </div>
           )}

@@ -1,12 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/admin/LogoutButton";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 export const metadata: Metadata = {
   title: "Admin — Toko Mini Moni",
 };
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  if (!(await isAdminAuthenticated())) redirect("/admin/login");
+
   return (
     <div className="min-h-screen bg-[#fffaf0]">
       <header className="border-b border-[#efe2c7] bg-white">

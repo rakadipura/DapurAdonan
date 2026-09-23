@@ -8,6 +8,7 @@ Online ordering and table booking app for a home bakery/cake shop, built with Ne
 - **Custom cake orders** — configurable lead time, custom text/design notes
 - **Ordering** — pickup or delivery, multiple payment methods, guest order lookup by code + phone
 - **Table booking** — time-slot capacity management, cancel/reschedule, WhatsApp confirmation links
+- **Admin dashboard** — `/admin` behind a single shared password (`ADMIN_PASSWORD`) with an HMAC-signed session cookie; every `/api/admin/*` route and the dashboard layout enforce it
 - Prices in Rupiah, all scheduling in WIB (Western Indonesia Time)
 
 ## Tech stack
@@ -25,31 +26,39 @@ Online ordering and table booking app for a home bakery/cake shop, built with Ne
 npm install
 ```
 
-2. Set up a test database and run migrations:
+2. Configure your environment (see [`.env.example`](.env.example)):
+
+```bash
+cp .env.example .env.local
+# set DATABASE_URL, ADMIN_PASSWORD, ADMIN_SESSION_SECRET
+```
+
+3. Set up a test database and run migrations:
 
 ```bash
 npm run db:ci:setup
 ```
 
-3. Run type‑check:
+4. Run type‑check:
 
 ```bash
 npm run type-check
 ```
 
-4. Run unit tests:
+5. Run unit tests:
 
 ```bash
 npm run test
 ```
 
-5. Run end‑to‑end tests:
+6. Run end‑to‑end tests (needs Playwright browsers and a seeded database):
 
 ```bash
+npx playwright install
 npm run test:e2e
 ```
 
-6. Start the development server:
+7. Start the development server:
 
 ```bash
 npm run dev
@@ -73,17 +82,17 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## CI / CD
 
-[![CI](https://github.com/your-repo/toko-mini-moni-app/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/your-repo/toko-mini-moni-app/actions/workflows/ci-cd.yml)
+[![CI](https://github.com/rakadipura/DapurAdonan/actions/workflows/ci.yml/badge.svg)](https://github.com/rakadipura/DapurAdonan/actions/workflows/ci.yml)
 
-The project uses a GitHub Actions pipeline that:
+The project uses a GitHub Actions workflow (`.github/workflows/ci.yml`) with three jobs:
 
-- Lints the code (`npm run lint`)
-- Runs a TypeScript type‑check (`npm run type-check`)
-- Executes unit tests (`npm run test`) against a test‑database
-- Executes Playwright end‑to‑end tests (`npm run test:e2e`)
-- Performs a security audit (`npm audit --audit-level=high`)
-- Builds the production bundle (`npm run build`)
-- Deploys automatically to Vercel on pushes to `main`
+- **Lint & Typecheck** — `npm run lint` and `npm run type-check`
+- **Unit Tests** — `npm run test` (Vitest)
+- **Build** — `npm run build` (runs after the two jobs above)
+
+Not currently in CI (run it locally): Playwright end‑to‑end tests (`npm run test:e2e`) — the
+workflow contains a commented‑out `e2e-tests` job with the steps needed to enable it.
+There is no automated deploy step yet.
 
 **Running CI locally**
 
@@ -100,13 +109,9 @@ npm run type-check
 # Unit tests
 npm run test
 
-# End‑to‑end tests (requires Playwright browsers)
+# End‑to‑end tests (requires Playwright browsers and a database)
+npx playwright install
 npm run test:e2e
-
-# Security audit
-npm audit --audit-level=high
 ```
-
-Add the badge above to your README to surface CI status.
 
 ---

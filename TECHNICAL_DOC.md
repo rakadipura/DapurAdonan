@@ -394,7 +394,7 @@ export function formatDateYMD(d: Date): string {
 const createBookingSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   slotId: z.number().int().positive(),
-  partySize: z.number().int().min(1).max(8),
+  partySize: z.number().int().min(1).max(99), // real limit = slot capacity (BookingSlot.capacity)
   name: z.string().trim().min(1),
   phone: z.string().trim().regex(/^(\+?62|0)8[0-9]{6,11}$/),
   email: z.string().email().optional(),

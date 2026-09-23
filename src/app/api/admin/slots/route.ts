@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { isAdminAuthenticated, adminUnauthorized } from "@/lib/admin-auth";
 
 const slotSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
@@ -12,6 +13,8 @@ const slotSchema = z.object({
 });
 
 export async function GET() {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   try {
     const slots = await prisma.bookingSlot.findMany({
       orderBy: { order: "asc" },
@@ -24,6 +27,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   try {
     const body = await req.json();
     const parsed = slotSchema.safeParse(body);

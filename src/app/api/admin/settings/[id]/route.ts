@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { isAdminAuthenticated, adminUnauthorized } from "@/lib/admin-auth";
 
 const settingSchema = z.object({
   value: z.string().optional(),
@@ -10,6 +11,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const { id } = await params;
   try {
     const setting = await prisma.setting.findUnique({
@@ -29,6 +32,8 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const { id } = await params;
   try {
     const body = await req.json();
@@ -58,6 +63,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const { id } = await params;
   try {
     await prisma.setting.delete({ where: { key: id } });

@@ -41,11 +41,22 @@ describe('Booking Validations', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects partySize > 8', () => {
+    it('allows partySize above the old per-table limit (slot capacity decides)', () => {
       const result = createBookingSchema.safeParse({
         date: '2025-12-25',
         slotId: 1,
-        partySize: 9,
+        partySize: 12,
+        name: 'Test',
+        phone: '081234567890',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects partySize beyond the sanity bound', () => {
+      const result = createBookingSchema.safeParse({
+        date: '2025-12-25',
+        slotId: 1,
+        partySize: 100,
         name: 'Test',
         phone: '081234567890',
       });
@@ -162,10 +173,10 @@ describe('Date Utilities', () => {
 });
 
 describe('Booking Business Logic', () => {
-  it('validates max party size range', () => {
-    const maxPartySize = 8;
-    expect(maxPartySize).toBeGreaterThan(0);
-    expect(maxPartySize).toBeLessThanOrEqual(20);
+  it('uses slot capacity (default 8 kursi) as the party-size ceiling', () => {
+    const defaultSlotCapacity = 8;
+    expect(defaultSlotCapacity).toBeGreaterThan(0);
+    expect(defaultSlotCapacity).toBeLessThanOrEqual(20);
   });
 
   it('calculates remaining capacity correctly', () => {

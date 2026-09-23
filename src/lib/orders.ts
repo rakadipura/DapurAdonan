@@ -1,9 +1,14 @@
 import { prisma } from "./db";
-import type { CustomerType, DeliveryZone, PickupWindow } from "@/types";
-import { toWIB, fromWIBString, formatDateYMD } from "./settings";
-import { isValidPhone, isValidEmail } from "./regex";
-import { formatRupiah, toRupiahInt } from "./money";
-import { startOfDay, addDays } from "date-fns";
+import { Prisma } from "@prisma/client";
+import type { DeliveryZone, PickupWindow } from "@/types";
+import {
+  daysBetweenYMD,
+  fromWIBString,
+  parseYMD,
+  wibToday,
+  wibTomorrow,
+} from "./settings";
+import { isValidPhone, isValidEmail, normalizePhone } from "./regex";
 
 export type OrderStatus = "PENDING" | "CONFIRMED" | "BAKING" | "READY" | "COMPLETED" | "CANCELLED";
 export type OrderType = "PICKUP" | "DELIVERY";
@@ -98,7 +103,7 @@ export async function getOrder(code: string, phone: string): Promise<OrderWithIt
   });
 
   if (!order) return null;
-  if (order.customerPhone !== phone) return null;
+  if (order.customerPhone !== normalizePhone(phone)) return null;
 
   const items = order.itemsOrder.map((item: {
     id: number;
@@ -230,42 +235,12 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       }
     }
 
-    // Validate daily stock
-    if (product.dailyStock !== null) {
-      const nowWIB = toWIB(new Date());
-      const todayStart = startOfDay(nowWIB);
-      const todayEnd = addDays(todayStart, 1);
-
-      const soldToday = await prisma.orderItem.groupBy({
-        by: ["productId"],
-        where: {
-          productId: item.productId,
-          order: {
-            status: { in: ["PENDING", "CONFIRMED", "BAKING", "READY", "COMPLETED"] },
-            createdAt: { gte: todayStart, lt: todayEnd },
-          },
-        },
-        _sum: { qty: true },
-      });
-
-      const soldQty = soldToday[0]?._sum.qty || 0;
-      const available = product.dailyStock - soldQty;
-      if (available <= 0) {
-        throw new Error(`Stok harian untuk "${product.name}" sudah habis (stok harian: ${product.dailyStock}, terpakai: ${soldQty})`);
-      }
-      if (item.qty > available) {
-        throw new Error(`Stok "${product.name}" tidak cukup: diminta ${item.qty}, tersisa ${available} (stok harian: ${product.dailyStock}, terpakai: ${soldQty})`);
-      }
-    }
-
+    // Daily stock is validated inside createOrder's transaction (with the
+    // product rows locked) so concurrent orders can't oversell it.
     // Validate lead time for custom cakes
     if (isCustomCake || product.leadTimeDays > 0) {
       if (pickupDate) {
-        const pickup = fromWIBString(pickupDate);
-        const nowWIB = toWIB(new Date());
-        const todayStart = startOfDay(nowWIB);
-        const pickupStart = new Date(pickup.getFullYear(), pickup.getMonth(), pickup.getDate());
-        const diffDays = (pickupStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
+        const diffDays = daysBetweenYMD(wibToday(), pickupDate);
         if (diffDays < product.leadTimeDays) {
           throw new Error(
             `Pesanan kue custom/lead time memerlukan minimal ${product.leadTimeDays} hari persiapan. Tanggal pengambilan (${pickupDate}) terlalu dekat (hanya ${diffDays} hari dari hari ini). Pilih tanggal minimal ${product.leadTimeDays} hari ke depan.`
@@ -314,61 +289,97 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       const availableWindows = windows.map((w) => `${w.start}-${w.end}`).join(", ");
       throw new Error(`Jadwal pengambilan "${pickupWindow}" tidak tersedia. Jadwal yang valid: ${availableWindows || "tidak ada"}`);
     }
-    const pickup = fromWIBString(pickupDate);
-    const nowWIB = toWIB(new Date());
-    const todayStart = startOfDay(nowWIB);
-    const pickupStart = new Date(pickup.getFullYear(), pickup.getMonth(), pickup.getDate());
-    const diffDays = (pickupStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays < 0) {
-      throw new Error(`Tanggal pengambilan (${pickupDate}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStart.toISOString().slice(0, 10)}`);
+    const todayStr = wibToday();
+    if (pickupDate < todayStr) {
+      throw new Error(`Tanggal pengambilan (${pickupDate}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStr}`);
     }
-  }
+  }  const orderCode = generateOrderCode();
 
-  const orderCode = generateOrderCode();
+  // Lock the product rows involved (ascending id keeps lock-acquisition order
+  // consistent across transactions and avoids deadlocks) so concurrent orders
+  // can't oversell limited daily stock.
+  const productIds = [...new Set(items.map((i) => i.productId))].sort((a, b) => a - b);
 
-  const order = await prisma.order.create({
-    data: {
-      code: orderCode,
-      status: "PENDING",
-      type,
-      customerName,
-      customerPhone,
-      customerEmail: customerEmail || null,
-      pickupDate: pickupDate ? fromWIBString(pickupDate) : null,
-      pickupWindow: pickupWindow || null,
-      deliveryAddress: deliveryAddress || null,
-      deliveryZone: deliveryZone || null,
-      deliveryFee,
-      notes: notes || null,
-      isCustomCake,
-      customText: customText || null,
-      customDesign: customDesign || null,
-      customPhotoUrl: customPhotoUrl || null,
-      paymentMethod,
-      isPaid: false,
-      paymentProofUrl: paymentProofUrl || null,
-      total,
-      createdAt: new Date(),
-      itemsOrder: {
-        create: orderItems.map((item) => ({
-          productId: item.product.id,
-          variantId: item.variant?.id ?? null,
-          qty: item.qty,
-          notes: item.notes || null,
-          selectedAddOns: item.selectedAddOnIds,
-          addOnsPrice: item.addOns.reduce((sum: number, a: { price: number }) => sum + a.price, 0),
-          price: item.product.basePrice + (item.variant?.priceDiff || 0),
-        })),
-      },
-    },
-    include: {
-      itemsOrder: {
-        include: {
-          product: { select: { name: true, imageUrl: true } },
-          variant: { select: { name: true, priceDiff: true } },
+  const order = await prisma.$transaction(async (tx) => {
+    if (productIds.length > 0) {
+      await tx.$queryRaw`SELECT id FROM "Product" WHERE id IN (${Prisma.join(productIds)}) FOR UPDATE`;
+    }
+
+    // Stock re-check under the lock: validation outside the transaction only
+    // protects against stale data, not concurrent writers.
+    const stockTodayStart = fromWIBString(wibToday());
+    const stockTodayEnd = fromWIBString(wibTomorrow());
+
+    for (const ordered of orderItems) {
+      const dailyStock = ordered.product.dailyStock;
+      if (dailyStock === null) continue;
+
+      const soldToday = await tx.orderItem.groupBy({
+        by: ["productId"],
+        where: {
+          productId: ordered.product.id,
+          order: {
+            status: { in: ["PENDING", "CONFIRMED", "BAKING", "READY", "COMPLETED"] },
+            createdAt: { gte: stockTodayStart, lt: stockTodayEnd },
+          },
+        },
+        _sum: { qty: true },
+      });
+
+      const soldQty = soldToday[0]?._sum.qty || 0;
+      const available = dailyStock - soldQty;
+      if (available <= 0) {
+        throw new Error(`Stok harian untuk "${ordered.product.name}" sudah habis (stok harian: ${dailyStock}, terpakai: ${soldQty})`);
+      }
+      if (ordered.qty > available) {
+        throw new Error(`Stok "${ordered.product.name}" tidak cukup: diminta ${ordered.qty}, tersisa ${available} (stok harian: ${dailyStock}, terpakai: ${soldQty})`);
+      }
+    }
+
+    return tx.order.create({
+      data: {
+        code: orderCode,
+        status: "PENDING",
+        type,
+        customerName,
+        customerPhone,
+        customerEmail: customerEmail || null,
+        pickupDate: pickupDate ? parseYMD(pickupDate) : null,
+        pickupWindow: pickupWindow || null,
+        deliveryAddress: deliveryAddress || null,
+        deliveryZone: deliveryZone || null,
+        deliveryFee,
+        notes: notes || null,
+        isCustomCake,
+        customText: customText || null,
+        customDesign: customDesign || null,
+        customPhotoUrl: customPhotoUrl || null,
+        paymentMethod,
+        isPaid: false,
+        paymentProofUrl: paymentProofUrl || null,
+        total,
+        createdAt: new Date(),
+        itemsOrder: {
+          create: orderItems.map((item) => ({
+            productId: item.product.id,
+            variantId: item.variant?.id ?? null,
+            qty: item.qty,
+            notes: item.notes || null,
+            selectedAddOns: item.selectedAddOnIds,
+            addOnsPrice: item.addOns.reduce((sum: number, a: { price: number }) => sum + a.price, 0),
+            price: item.product.basePrice + (item.variant?.priceDiff || 0),
+          })),
         },
       },
-    },
+      include: {
+        itemsOrder: {
+          include: {
+            product: { select: { name: true, imageUrl: true } },
+            variant: { select: { name: true, priceDiff: true } },
+          },
+        },
+      },
+    });
   });
 
   return mapOrderWithItems(order);
@@ -457,9 +468,7 @@ export async function getOrders(filter: OrderListFilter = {}): Promise<OrderWith
   const where: { status?: OrderStatus; createdAt?: { gte: Date; lt: Date } } = {};
   if (status) where.status = status;
   if (scope === "today") {
-    const nowWIB = toWIB(new Date());
-    const todayStart = startOfDay(nowWIB);
-    where.createdAt = { gte: todayStart, lt: addDays(todayStart, 1) };
+    where.createdAt = { gte: fromWIBString(wibToday()), lt: fromWIBString(wibTomorrow()) };
   }
 
   const orders = await prisma.order.findMany({
@@ -487,9 +496,8 @@ export interface OrderStats {
 
 /** Summary numbers for the admin dashboard's stat cards. */
 export async function getOrderStats(): Promise<OrderStats> {
-  const nowWIB = toWIB(new Date());
-  const todayStart = startOfDay(nowWIB);
-  const todayEnd = addDays(todayStart, 1);
+  const todayStart = fromWIBString(wibToday());
+  const todayEnd = fromWIBString(wibTomorrow());
 
   const [todayCount, pendingCount, unpaidCount, todayRevenue] = await Promise.all([
     prisma.order.count({ where: { createdAt: { gte: todayStart, lt: todayEnd } } }),
@@ -510,12 +518,8 @@ export async function getOrderStats(): Promise<OrderStats> {
 }
 
 export async function getTodayOrders(): Promise<OrderWithItems[]> {
-  const nowWIB = toWIB(new Date());
-  const todayStart = startOfDay(nowWIB);
-  const tomorrowStart = addDays(todayStart, 1);
-
   const orders = await prisma.order.findMany({
-    where: { createdAt: { gte: todayStart, lt: tomorrowStart } },
+    where: { createdAt: { gte: fromWIBString(wibToday()), lt: fromWIBString(wibTomorrow()) } },
     include: {
       itemsOrder: {
         include: {
@@ -539,9 +543,8 @@ export async function getProductAvailability(productId: number): Promise<{ avail
   if (!product) return null;
   if (product.dailyStock === null) return { available: -1, sold: 0, total: -1 };
 
-  const nowWIB = toWIB(new Date());
-  const todayStart = startOfDay(nowWIB);
-  const todayEnd = addDays(todayStart, 1);
+  const todayStart = fromWIBString(wibToday());
+  const todayEnd = fromWIBString(wibTomorrow());
 
   const soldToday = await prisma.orderItem.groupBy({
     by: ["productId"],
@@ -663,7 +666,6 @@ async function getPickupWindowsRaw(): Promise<PickupWindow[]> {
   try { return JSON.parse(row.value); } catch { return []; }
 }
 
-const __orderCodeCounter = 0;
 function generateOrderCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";

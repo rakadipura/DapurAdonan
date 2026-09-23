@@ -1,8 +1,14 @@
 import { prisma } from "./db";
-import type { CustomerType } from "@/types";
-import { toWIB, fromWIBString, formatDateYMD, formatDateLong, getWhatsAppNumber } from "./settings";
+import {
+  formatDateYMD,
+  formatDateLong,
+  getWhatsAppNumber,
+  parseYMD,
+  wibToday,
+  wibTomorrow,
+} from "./settings";
 
-import { isValidPhone, normalizePhone } from "./regex";
+import { normalizePhone } from "./regex";
 
 
 export type BookingStatus =
@@ -60,7 +66,7 @@ export interface SlotAvailability {
 }
 
 export async function getAvailableSlots(date: string): Promise<SlotAvailability[]> {
-  const wibDate = fromWIBString(date);
+  const wibDate = parseYMD(date);
 
   const bookings = await prisma.booking.findMany({
     where: {
@@ -96,6 +102,11 @@ async function ensureSlotCapacity(
   wibDate: Date,
   requiredSize: number,
 ): Promise<void> {
+  // Serialize concurrent capacity checks for the same slot. Without this row
+  // lock, two transactions under READ COMMITTED can both read the same
+  // pre-insert booking count and together exceed the slot capacity.
+  await tx.$queryRaw`SELECT id FROM "BookingSlot" WHERE id = ${slotId} FOR UPDATE`;
+
   const slot = await tx.bookingSlot.findUnique({ where: { id: slotId } });
   if (!slot) throw new Error(`Slot booking dengan ID ${slotId} tidak ditemukan`);
 
@@ -118,7 +129,7 @@ async function ensureSlotCapacity(
 
 
 export async function createBooking(input: CreateBookingInput): Promise<BookingWithSlot> {
-  const wibDate = fromWIBString(input.date);
+  const wibDate = parseYMD(input.date);
 
   const slot = await prisma.bookingSlot.findUnique({ where: { id: input.slotId } });
   if (!slot) {
@@ -128,24 +139,21 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
     throw new Error(`Slot booking "${slot.name}" (${slot.startTime}-${slot.endTime}) tidak aktif`);
   }
 
-  const nowWIB = toWIB(new Date());
-  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
-  const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
-  const diffDays = (dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
-  if (diffDays < 0) {
+  const todayStr = wibToday();
+  if (input.date < todayStr) {
     throw new Error(
-      `Tanggal booking (${input.date}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStart.toISOString().slice(0, 10)}`
+      `Tanggal booking (${input.date}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStr}`
     );
   }
 
-  // Validate party size against max
-  const { getMaxPartySize } = await import("./settings");
-  const maxPartySize = await getMaxPartySize();
-  if (input.partySize > maxPartySize) {
-    throw new Error(`Jumlah orang (${input.partySize}) melebihi batas maksimum (${maxPartySize})`);
-  }
+  // Party size is capped by this slot's seat capacity (maintained per slot
+  // from the admin panel); the remaining-seat check happens inside
+  // ensureSlotCapacity, within the transaction.
   if (input.partySize < 1) {
     throw new Error("Jumlah orang minimal 1");
+  }
+  if (input.partySize > slot.capacity) {
+    throw new Error(`Jumlah orang (${input.partySize}) melebihi kapasitas jadwal (${slot.capacity} kursi)`);
   }
 
   const code = await generateUniqueBookingCode();
@@ -166,14 +174,10 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-    });
-
-    const bookingWithSlot = await tx.booking.findUnique({
-      where: { code },
       include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
     });
 
-    return bookingWithSlot;
+    return booking;
   });
 
   if (!result) throw new Error("Booking creation failed: data tidak tersimpan");
@@ -193,11 +197,46 @@ async function generateUniqueBookingCode(): Promise<string> {
   throw new Error("Gagal generate kode booking unik");
 }
 
-export async function getBooking(code: string, phone: string): Promise<BookingWithSlot | null> {
-  const booking = await prisma.booking.findUnique({
+/** Row shape accepted by mapBookingWithSlot (a Booking plus its slot). */
+type BookingRow = Parameters<typeof mapBookingWithSlot>[0];
+
+/**
+ * Look up a booking by code and follow its reschedule chain to the currently
+ * active booking.
+ *
+ * Rescheduling supersedes the old row (status RESCHEDULED, excluded from
+ * capacity counts) and creates a new row pointing back at it via
+ * rescheduledFromId. Customer-facing codes therefore always resolve forward
+ * to the booking that is actually happening.
+ */
+async function resolveActiveBooking(code: string): Promise<BookingRow | null> {
+  const slotSelect = { select: { id: true, name: true, startTime: true, endTime: true } } as const;
+
+  let booking: BookingRow | null = await prisma.booking.findUnique({
     where: { code },
-    include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+    include: { slot: slotSelect },
   });
+  if (!booking) return null;
+
+  const seen = new Set<number>();
+  while (booking.status === "RESCHEDULED") {
+    if (seen.has(booking.id)) break; // cycle guard
+    seen.add(booking.id);
+
+    const next: BookingRow | null = await prisma.booking.findFirst({
+      where: { rescheduledFromId: booking.id },
+      include: { slot: slotSelect },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!next) break; // superseded but no successor found – return as-is
+    booking = next;
+  }
+
+  return booking;
+}
+
+export async function getBooking(code: string, phone: string): Promise<BookingWithSlot | null> {
+  const booking = await resolveActiveBooking(code);
 
   if (!booking) return null;
   if (booking.phone !== normalizePhone(phone)) return null;
@@ -205,22 +244,23 @@ export async function getBooking(code: string, phone: string): Promise<BookingWi
 }
 
 export async function getBookingByCode(code: string): Promise<BookingWithSlot | null> {
-  const booking = await prisma.booking.findUnique({
-    where: { code },
-    include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
-  });
-
+  const booking = await resolveActiveBooking(code);
   if (!booking) return null;
   return mapBookingWithSlot(booking);
 }
 
 export async function cancelBooking(code: string, phone: string, reason?: string): Promise<BookingWithSlot | null> {
-  const booking = await prisma.booking.findUnique({ where: { code } });
+  const booking = await resolveActiveBooking(code);
   if (!booking) return null;
   if (booking.phone !== normalizePhone(phone)) return null;
 
+  if (booking.status === "CANCELLED") return mapBookingWithSlot(booking); // idempotent
+  if (booking.status !== "PENDING" && booking.status !== "CONFIRMED") {
+    throw new Error(`Booking dengan status ${booking.status} tidak dapat dibatalkan`);
+  }
+
   const updated = await prisma.booking.update({
-    where: { code },
+    where: { id: booking.id },
     data: {
       status: "CANCELLED",
       cancelledAt: new Date(),
@@ -239,11 +279,15 @@ export async function rescheduleBooking(
   newDate: string,
   newSlotId: number
 ): Promise<BookingWithSlot | null> {
-  const booking = await prisma.booking.findUnique({ where: { code } });
+  const booking = await resolveActiveBooking(code);
   if (!booking) return null;
   if (booking.phone !== normalizePhone(phone)) return null;
 
-  const wibDate = fromWIBString(newDate);
+  if (booking.status !== "PENDING" && booking.status !== "CONFIRMED") {
+    throw new Error(`Booking dengan status ${booking.status} tidak dapat dijadwal ulang`);
+  }
+
+  const wibDate = parseYMD(newDate);
 
   const slot = await prisma.bookingSlot.findUnique({ where: { id: newSlotId } });
   if (!slot) {
@@ -253,34 +297,50 @@ export async function rescheduleBooking(
     throw new Error(`Slot booking baru "${slot.name}" (${slot.startTime}-${slot.endTime}) tidak aktif`);
   }
 
-  const nowWIB = toWIB(new Date());
-  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
-  const dateStart = new Date(wibDate.getFullYear(), wibDate.getMonth(), wibDate.getDate());
-  const diffDays = (dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24);
-  if (diffDays < 0) {
+  const todayStr = wibToday();
+  if (newDate < todayStr) {
     throw new Error(
-      `Tanggal booking baru (${newDate}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStart.toISOString().slice(0, 10)}`
+      `Tanggal booking baru (${newDate}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStr}`
     );
   }
 
+  const newCode = await generateUniqueBookingCode();
+
   const result = await prisma.$transaction(async (tx: import("@prisma/client").Prisma.TransactionClient) => {
-        // Verify capacity via shared helper (exclude RESCHEDULED)
+        // Verify capacity via shared helper (locks the slot row; excludes
+        // superseded RESCHEDULED rows)
         await ensureSlotCapacity(tx, newSlotId, wibDate, booking.partySize);
 
-        const updated = await tx.booking.update({
-          where: { code },
+        // 1) Supersede the old row. It keeps its original date/slot as an
+        //    audit trail and stops counting toward capacity.
+        await tx.booking.update({
+          where: { id: booking.id },
           data: {
+            status: "RESCHEDULED",
+            rescheduledAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+
+        // 2) Create the new active booking, linked back to the original one.
+        const created = await tx.booking.create({
+          data: {
+            code: newCode,
             date: wibDate,
             slotId: newSlotId,
-            status: "RESCHEDULED",
+            partySize: booking.partySize,
+            name: booking.name,
+            phone: booking.phone,
+            email: booking.email,
+            status: "PENDING",
             rescheduledFromId: booking.id,
-            rescheduledAt: new Date(),
+            createdAt: new Date(),
             updatedAt: new Date(),
           },
           include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
         });
 
-        return updated;
+        return created;
       });
 
   return mapBookingWithSlot(result);
@@ -322,11 +382,7 @@ export async function getBookings(filter: BookingListFilter = {}): Promise<Booki
   const where: { status?: BookingStatus; date?: { gte: Date; lt: Date } } = {};
   if (status) where.status = status;
   if (scope === "today") {
-    const nowWIB = toWIB(new Date());
-    const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-    where.date = { gte: todayStart, lt: tomorrowStart };
+    where.date = { gte: parseYMD(wibToday()), lt: parseYMD(wibTomorrow()) };
   }
 
   const bookings = await prisma.booking.findMany({
@@ -339,14 +395,9 @@ export async function getBookings(filter: BookingListFilter = {}): Promise<Booki
 }
 
 export async function getTodayBookings(): Promise<BookingWithSlot[]> {
-  const nowWIB = toWIB(new Date());
-  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
-  const tomorrowStart = new Date(todayStart);
-  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-
   const bookings = await prisma.booking.findMany({
     where: {
-      date: { gte: todayStart, lt: tomorrowStart },
+      date: { gte: parseYMD(wibToday()), lt: parseYMD(wibTomorrow()) },
     },
     include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
     orderBy: { createdAt: "desc" },
@@ -371,17 +422,15 @@ export async function getBookingDateOptions(days: number = 14): Promise<{ date: 
 }
 
 export async function getBookingStats() {
-  const nowWIB = toWIB(new Date());
-  const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
-  const tomorrowStart = new Date(todayStart);
-  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  const todayStart = parseYMD(wibToday());
+  const tomorrowStart = parseYMD(wibTomorrow());
 
   const [todayBookings, pendingBookings, totalBookings] = await Promise.all([
     prisma.booking.count({
-      where: { date: { gte: todayStart, lt: tomorrowStart }, status: { not: "CANCELLED" } },
+      where: { date: { gte: todayStart, lt: tomorrowStart }, status: { notIn: ["CANCELLED", "RESCHEDULED"] } },
     }),
     prisma.booking.count({ where: { status: "PENDING" } }),
-    prisma.booking.count({ where: { status: { not: "CANCELLED" } } }),
+    prisma.booking.count({ where: { status: { notIn: ["CANCELLED", "RESCHEDULED"] } } }),
   ]);
 
   return { todayBookings, pendingBookings, totalBookings };
@@ -392,7 +441,7 @@ export function generateWhatsAppLink(booking: BookingWithSlot): string {
   const message = `Halo Toko Mini Moni, saya ingin konfirmasi booking meja:\n` +
     `Kode: ${booking.code}\n` +
     // Parse the stored YYYY‑MM‑DD string as a WIB date to avoid timezone shift
-    `Tanggal: ${formatDateLong(fromWIBString(booking.date))}\n` +
+    `Tanggal: ${formatDateLong(parseYMD(booking.date))}\n` +
     `Waktu: ${booking.slot.startTime}-${booking.slot.endTime}\n` +
     `Jumlah orang: ${booking.partySize}\n` +
     `Nama: ${booking.name}\n` +
@@ -439,19 +488,4 @@ function mapBookingWithSlot(booking: {
     updatedAt: booking.updatedAt,
     noShowAt: booking.noShowAt,
   };
-}
-
-// Re-use the centralized helper from settings.ts
-import { getMaxPartySize as getMaxPartySizeSetting } from "./settings";
-
-// Legacy alias kept for backward compatibility (if any internal calls exist)
-const getMaxPartySize = getMaxPartySizeSetting;
-
-function generateBookingCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 8; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
 }

@@ -14,20 +14,14 @@ async function main() {
   // Create test booking slots
   await prisma.bookingSlot.createMany({
     data: [
-      { name: 'Test Pagi', startTime: '09:00', endTime: '11:00', capacity: 4, isActive: true, order: 1 },
-      { name: 'Test Siang', startTime: '12:00', endTime: '14:00', capacity: 4, isActive: true, order: 2 },
-      { name: 'Test Sore', startTime: '17:00', endTime: '19:00', capacity: 4, isActive: true, order: 3 },
+      { name: 'Test Pagi', startTime: '09:00', endTime: '11:00', capacity: 8, isActive: true, order: 1 },
+      { name: 'Test Siang', startTime: '12:00', endTime: '14:00', capacity: 8, isActive: true, order: 2 },
+      { name: 'Test Sore', startTime: '17:00', endTime: '19:00', capacity: 8, isActive: true, order: 3 },
     ],
     skipDuplicates: true,
   });
 
   // Create test settings
-  await prisma.setting.upsert({
-    where: { key: 'maxPartySize' },
-    update: { value: '8' },
-    create: { key: 'maxPartySize', value: '8' },
-  });
-
   await prisma.setting.upsert({
     where: { key: 'bookingLeadHours' },
     update: { value: '1' },

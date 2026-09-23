@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { isAdminAuthenticated, adminUnauthorized } from "@/lib/admin-auth";
 
 const productSchema = z.object({
   name: z.string().min(1).optional(),
@@ -35,6 +36,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const { id } = await params;
   try {
     const product = await prisma.product.findUnique({
@@ -59,6 +62,8 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const { id } = await params;
   try {
     const body = await req.json();
@@ -135,6 +140,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const { id } = await params;
   try {
     await prisma.product.delete({ where: { id: parseInt(id) } });

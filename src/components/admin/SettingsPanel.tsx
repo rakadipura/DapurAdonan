@@ -26,14 +26,9 @@ interface SettingDefinition {
   options?: { value: string; label: string }[];
 }
 
+// NOTE: the booking seat limit is no longer a global setting — it is each
+// BookingSlot's `capacity` ("Kapasitas Kursi"), maintained from /admin/slots.
 const SETTING_DEFINITIONS: SettingDefinition[] = [
-  {
-    key: "maxPartySize",
-    label: "Maksimal Orang per Meja",
-    description: "Batas maksimal jumlah orang yang bisa booking satu meja",
-    type: "number",
-    placeholder: "8",
-  },
   {
     key: "bookingLeadHours",
     label: "Lead Time Booking (jam)",
@@ -211,7 +206,7 @@ export function SettingsPanel() {
     if (!def) return "";
     switch (def.type) {
       case "number":
-        return "8";
+        return def.placeholder || "0";
       case "json":
         return "[]";
       case "boolean":

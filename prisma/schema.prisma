@@ -69,7 +69,7 @@ model BookingSlot {
   name      String
   startTime String    // "HH:mm" in WIB, e.g. "09:00"
   endTime   String    // "HH:mm" in WIB, e.g. "11:00"
-  capacity  Int       @default(4)
+  capacity  Int       @default(8) // max "kursi tersedia" per slot (set from /admin/slots)
   isActive  Boolean   @default(true)
   order     Int       @default(0)
   bookings  Booking[]
@@ -82,7 +82,7 @@ model Booking {
   date       DateTime  @db.Date // booking date (WIB)
   slotId     Int
   slot       BookingSlot @relation(fields: [slotId], references: [id])
-  partySize  Int       // 1..maxPartySize
+  partySize  Int       // 1..slot capacity
   name       String
   phone      String
   email      String?
@@ -91,7 +91,7 @@ model Booking {
   cancelReason String?
   rescheduledFromId Int? // reference to original booking if rescheduled
   rescheduledAt DateTime?
-  createdAt  DateTime
+  createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   noShowAt   DateTime?
 
@@ -133,7 +133,7 @@ model Order {
   paymentProofUrl String?        // stored in DB / external storage ref
 
   total           Int
-  createdAt       DateTime
+  createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   completedAt     DateTime?
 
@@ -166,8 +166,4 @@ model Setting {
   key      String   @unique
   value    String
   updatedAt DateTime @updatedAt
-}
-
-model OrderCode {
-  id Int @id @default(autoincrement())
 }

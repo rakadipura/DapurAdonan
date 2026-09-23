@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { confirmPayment } from "@/lib/orders";
+import { isAdminAuthenticated, adminUnauthorized } from "@/lib/admin-auth";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ code: string }> }) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const { code } = await params;
 
   try {

@@ -31,7 +31,7 @@ const emptyFormData: SlotFormData = {
   name: "",
   startTime: "09:00",
   endTime: "11:00",
-  capacity: 4,
+  capacity: 8,
   isActive: true,
   order: 0,
 };
@@ -264,7 +264,7 @@ export function SlotsPanel() {
                     <p className="font-medium text-[#6b4a2b]">{slot.name}</p>
                   </td>
                   <td className="px-4 py-3 text-[#5a4a3a]">{slot.startTime} – {slot.endTime} WIB</td>
-                  <td className="px-4 py-3 text-[#5a4a3a]">{slot.capacity} orang</td>
+                  <td className="px-4 py-3 text-[#5a4a3a]">{slot.capacity} kursi</td>
                   <td className="px-4 py-3">
                     <Button
                       variant={slot.isActive ? "default" : "outline"}
@@ -320,7 +320,7 @@ export function SlotsPanel() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <Label htmlFor="capacity">Kapasitas *</Label>
+                <Label htmlFor="capacity">Kapasitas Kursi *</Label>
                 <Input id="capacity" type="number" min="1" value={formData.capacity} onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })} aria-invalid={formErrors.capacity ? "true" : "false"} />
                 {formErrors.capacity && <p className="text-xs text-red-600 mt-1">Minimal 1</p>}
               </div>

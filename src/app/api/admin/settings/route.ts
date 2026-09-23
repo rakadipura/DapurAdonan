@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { isAdminAuthenticated, adminUnauthorized } from "@/lib/admin-auth";
 
 const settingSchema = z.object({
   key: z.string().min(1, "Key wajib diisi"),
@@ -8,6 +9,8 @@ const settingSchema = z.object({
 });
 
 export async function GET() {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   try {
     const settings = await prisma.setting.findMany({
       orderBy: { key: "asc" },
@@ -20,6 +23,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   try {
     const body = await req.json();
     const parsed = settingSchema.safeParse(body);

@@ -246,24 +246,23 @@ async function main() {
     prisma.bookingSlot.upsert({
       where: { id: 1 },
       update: {},
-      create: { id: 1, name: "Pagi", startTime: "09:00", endTime: "11:00", capacity: 4, isActive: true, order: 0 },
+      create: { id: 1, name: "Pagi", startTime: "09:00", endTime: "11:00", capacity: 8, isActive: true, order: 0 },
     }),
     prisma.bookingSlot.upsert({
       where: { id: 2 },
       update: {},
-      create: { id: 2, name: "Siang", startTime: "12:00", endTime: "14:00", capacity: 4, isActive: true, order: 1 },
+      create: { id: 2, name: "Siang", startTime: "12:00", endTime: "14:00", capacity: 8, isActive: true, order: 1 },
     }),
     prisma.bookingSlot.upsert({
       where: { id: 3 },
       update: {},
-      create: { id: 3, name: "Sore", startTime: "15:00", endTime: "17:00", capacity: 4, isActive: true, order: 2 },
+      create: { id: 3, name: "Sore", startTime: "15:00", endTime: "17:00", capacity: 8, isActive: true, order: 2 },
     }),
   ]);
   console.log("Booking slots created:", slots.length);
 
   // ---- Settings ----
   const settingEntries = [
-    { key: "maxPartySize", value: "8" },
     { key: "orderCutoffHour", value: "16" }, // last order for next day at 16:00 WIB
     { key: "bookingLeadHours", value: "1" }, // bookings open at least 1h ahead
     { key: "transferBank", value: "Bank BCA<br>Kategori: Toko Mini Moni<br>No. Rekening: 123-456-7890<br>Atas nama: Toko Mini Moni" },

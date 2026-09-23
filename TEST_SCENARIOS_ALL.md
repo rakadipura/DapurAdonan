@@ -38,8 +38,9 @@
 | Scenario | Steps | Expected |
 |----------|-------|----------|
 | Min size | Click - until 1 | Stops at 1 |
-| Max size | Click + until maxPartySize | Stops at setting (default 8) |
-| Exceed max | Try > maxPartySize | + button disabled |
+| Max size | Click + until max | Stops at the date's max "kursi tersedia" (slot capacity, default 8) |
+| Exceed max | Try > kursi tersedia | + button disabled |
+| Seats display | Change jumlah orang | Slot "kursi tersedia" drops by the same amount |
 
 ### 1.5 Contact Form Validation
 | Field | Invalid Input | Expected |
@@ -77,7 +78,7 @@
 | Date within leadHours | 400, "Booking minimal X jam sebelum jadwal" |
 | Invalid slotId | 400, "Jadwal tidak tersedia" |
 | Party size > remaining | 400, "Hanya tersisa X kursi" |
-| Party size > maxPartySize | 400, "Jumlah orang melebihi batas maksimum (X)" |
+| Party size > slot capacity | 400, "Jumlah orang melebihi kapasitas jadwal (X)" |
 | Invalid phone format | 400, "Nomor telepon tidak valid" |
 | Missing fields | 400, Zod validation errors |
 
@@ -198,11 +199,11 @@
 | Toggle active | Instant update |
 | Reorder | Up/down buttons swap order |
 | Delete slot | Confirmation, removes |
+| Kapasitas kursi | number | ≥ 1 — max "kursi tersedia" per slot (default 8) |
 
 ### 4.4 Settings (`/admin/settings`)
 | Setting | Type | Validation |
 |---------|------|------------|
-| maxPartySize | number | > 0 |
 | bookingLeadHours | number | ≥ 0 |
 | orderCutoffHour | number | 0-23 |
 | waNumber | string | 628... format |
@@ -286,7 +287,6 @@ await prisma.bookingSlot.createMany({
 // Settings (required for all flows)
 await prisma.setting.createMany({
   data: [
-    { key: 'maxPartySize', value: '8' },
     { key: 'bookingLeadHours', value: '1' },
     { key: 'orderCutoffHour', value: '16' },
     { key: 'whatsAppNumber', value: '6281234567890' },

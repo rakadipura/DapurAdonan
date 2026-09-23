@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getAvailableSlots, getBookingDateOptions } from "@/lib/bookings";
-import { getMaxPartySize, getBookingLeadHours, formatDateYMD, formatDateLong } from "@/lib/settings";
+import { getBookingLeadHours, formatDateYMD, formatDateLong } from "@/lib/settings";
 import { SessionProvider } from "@/components/customer/SessionProvider";
 import { BookingFlow } from "@/components/customer/booking/BookingFlow";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BookingPage() {
-  const [categories, products, slots, dateOptions, maxPartySize, leadHours] = await Promise.all([
+  const [categories, products, slots, dateOptions, leadHours] = await Promise.all([
     prisma.category.findMany({
       where: { isVisible: true },
       orderBy: { sortOrder: "asc" },
@@ -41,7 +41,6 @@ export default async function BookingPage() {
       select: { id: true, name: true, startTime: true, endTime: true, capacity: true },
     }),
     getBookingDateOptions(14),
-    getMaxPartySize(),
     getBookingLeadHours(),
   ]);
 
@@ -64,8 +63,7 @@ export default async function BookingPage() {
             </Link>
             <h1 className="mt-4 text-3xl font-bold text-[#6b4a2b]">Booking Meja</h1>
             <p className="mt-2 text-base text-[#5a4a3a]">
-               Pilih tanggal dan jam untuk makan bersama di Toko Mini Moni.
-              Hanya tersedia hingga {String(maxPartySize)} orang per meja.
+              Pilih tanggal dan jam untuk makan bersama di Toko Mini Moni.
             </p>
           </header>
 
@@ -74,7 +72,6 @@ export default async function BookingPage() {
             products={productsWithPrice}
             slots={slots}
             dateOptions={dateOptions}
-            maxPartySize={maxPartySize}
             leadHours={leadHours}
             defaultDate={defaultDate}
           />

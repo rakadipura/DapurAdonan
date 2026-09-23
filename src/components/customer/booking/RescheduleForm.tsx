@@ -11,7 +11,7 @@ export function RescheduleForm({ booking, dateOptions }: RescheduleFormProps) {
   const [show, setShow] = useState(false);
   const [newDate, setNewDate] = useState("");
   const [newSlotId, setNewSlotId] = useState("");
-  const [slots, setSlots] = useState<{ id: number; name: string; startTime: string; endTime: string; capacity: number }[]>([]);
+  const [slots, setSlots] = useState<{ id: number; name: string; startTime: string; endTime: string; capacity: number; remaining: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -91,20 +91,19 @@ export function RescheduleForm({ booking, dateOptions }: RescheduleFormProps) {
             {slots.map((slot) => (
               <button
                 key={slot.id}
-                type="button"
-                disabled={slot.capacity < booking.partySize}
+                type="button"                  disabled={slot.remaining < booking.partySize}
                 onClick={() => setNewSlotId(String(slot.id))}
                 className={`rounded-lg border p-3 text-left transition ${
                   newSlotId === String(slot.id)
                     ? "border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium"
-                    : slot.capacity < booking.partySize
+                    : slot.remaining < booking.partySize
                     ? "border-[#e6c98a] bg-gray-50 opacity-60"
                     : "border-[#e6c98a] bg-white hover:border-[#A0522D]"
                 }`}
               >
                 <div className="flex justify-between">
                   <span>{slot.name} · {slot.startTime} – {slot.endTime}</span>
-                  <span className="text-sm">{slot.capacity} meja tersedia</span>
+                  <span className="text-sm">{slot.remaining} kursi tersedia</span>
                 </div>
               </button>
             ))}

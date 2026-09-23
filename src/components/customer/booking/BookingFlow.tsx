@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { CustomerType } from "@/types";
 import { formatRupiah } from "@/lib/money";
 import { isValidPhone, normalizePhone } from "@/lib/regex";
+import { fromWIBString } from "@/lib/settings";
 import { ChevronLeftIcon, Loader2Icon } from "lucide-react";
 
 interface Slot {
@@ -34,7 +35,6 @@ interface BookingFlowProps {
   }>;
   slots: Slot[];
   dateOptions: Array<{ date: string; label: string }>;
-  maxPartySize: number;
   leadHours: number;
   defaultDate: string;
 }
@@ -42,7 +42,6 @@ interface BookingFlowProps {
 export function BookingFlow({
   slots,
   dateOptions,
-  maxPartySize,
   leadHours,
   defaultDate,
 }: BookingFlowProps) {
@@ -57,6 +56,13 @@ export function BookingFlow({
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ code: string; phone: string } | null>(null);
+
+  // Seats still bookable across the visible slots. "Jumlah orang" is capped
+  // by the date's "kursi tersedia" (each slot's capacity is maintained per
+  // slot from the admin panel), and the current value is subtracted directly
+  // from the seat count shown on every slot.
+  const maxSeats = availableSlots.reduce((max, s) => Math.max(max, s.remaining), 0);
+  const effPartySize = maxSeats > 0 ? Math.min(partySize, maxSeats) : partySize;
 
   // Initialize availableSlots from props on mount
   useEffect(() => {
@@ -103,8 +109,7 @@ export function BookingFlow({
     const now = new Date();
     const wibOffset = 7 * 60 * 60 * 1000;
     const nowWIB = new Date(now.getTime() + wibOffset);
-    const todayStart = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
-    const dateStart = new Date(date + "T00:00:00");
+    const dateStart = fromWIBString(date);
     const diffHours = (dateStart.getTime() - nowWIB.getTime()) / (1000 * 60 * 60);
     return diffHours < leadHours;
   };
@@ -122,7 +127,7 @@ export function BookingFlow({
       setError("Pilih jadwal dahulu");
       return;
     }
-    if (selectedSlot.remaining < partySize) {
+    if (selectedSlot.remaining < effPartySize) {
       setError(`Hanya tersisa ${selectedSlot.remaining} kursi untuk jadwal ini`);
       return;
     }
@@ -137,7 +142,7 @@ export function BookingFlow({
         const payload = {
           date: selectedDate,
           slotId: selectedSlot.id,
-          partySize,
+          partySize: effPartySize,
           name: contact.name,
           phone: normalizePhone(contact.phone),
           email: contact.email || undefined,
@@ -262,7 +267,8 @@ export function BookingFlow({
                   </div>
                 ) : (
                   availableSlots.map((slot) => {
-                    const disabled = slot.remaining < 1 || slot.remaining < partySize;
+                    const seatsAfter = slot.remaining - effPartySize;
+                    const disabled = slot.remaining < effPartySize;
                     return (
                         <button
                           key={slot.id}
@@ -276,7 +282,6 @@ export function BookingFlow({
                         `}
                           >
                             <>
-                              <span className="sr-only">meja tersedia</span>
                               <span>
                                 {slot.name} · {slot.startTime} – {slot.endTime}&nbsp;
                               </span>
@@ -285,7 +290,7 @@ export function BookingFlow({
                                   ? slot.remaining < 1
                                     ? 'Penuh'
                                     : 'Hanya ' + slot.remaining + ' kursi'
-                                  : slot.remaining + ' kursi tersedia'}
+                                  : seatsAfter + ' kursi tersedia'}
                               </span>
                             </>
                           </button>
@@ -300,32 +305,29 @@ export function BookingFlow({
 
             <div>
               <label className="mb-1 block text-sm font-medium text-[#6b4a2b]">
-                Jumlah orang ({partySize})
+                Jumlah orang ({effPartySize})
               </label>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  disabled={partySize <= 1}
-                  onClick={() => setPartySize((n) => Math.max(1, n - 1))}
+                  disabled={effPartySize <= 1}
+                  onClick={() => setPartySize(Math.max(1, effPartySize - 1))}
                   className="h-8 w-8 rounded-full border border-[#e6c98a] bg-white flex items-center justify-center text-sm font-medium text-[#6b4a2b] hover:bg-[#fff6e6] disabled:opacity-40"
                 >
                   −
                 </button>
                 <span className="flex-1 text-center text-lg font-semibold text-[#6b4a2b]">
-                  {partySize}
+                  {effPartySize}
                 </span>
                 <button
                   type="button"
-                  disabled={partySize >= maxPartySize}
-                  onClick={() => setPartySize((n) => Math.min(maxPartySize, n + 1))}
+                  disabled={effPartySize >= maxSeats}
+                  onClick={() => setPartySize(Math.min(maxSeats, effPartySize + 1))}
                   className="h-8 w-8 rounded-full border border-[#e6c98a] bg-white flex items-center justify-center text-sm font-medium text-[#6b4a2b] hover:bg-[#fff6e6] disabled:opacity-40"
                 >
                   +
                 </button>
               </div>
-              <p className="mt-1 text-xs text-[#5a4a3a]">
-                Maksimal {maxPartySize} orang per meja.
-              </p>
             </div>
           </div>
         )}
@@ -341,7 +343,7 @@ export function BookingFlow({
               <span className="font-medium text-[#6b4a2b]">Ringkasan:</span>
               <span className="ml-2 text-[#5a4a3a]">
                 {selectedDate} · {selectedSlot?.name} (
-                {selectedSlot?.startTime}–{selectedSlot?.endTime}) · {partySize} orang
+                {selectedSlot?.startTime}–{selectedSlot?.endTime}) · {effPartySize} orang
               </span>
             </div>
 

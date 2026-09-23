@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { updateBookingStatus, BOOKING_STATUSES } from "@/lib/bookings";
+import { isAdminAuthenticated, adminUnauthorized } from "@/lib/admin-auth";
 
 const schema = z.object({
   status: z.enum(BOOKING_STATUSES as [string, ...string[]]),
 });
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
+  if (!(await isAdminAuthenticated())) return adminUnauthorized();
+
   const { code } = await params;
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
