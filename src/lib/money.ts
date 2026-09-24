@@ -1,14 +1,11 @@
 /**
  * Format an integer rupiah amount as Indonesian currency string,
  * e.g. 25000 => "Rp25.000" and 150000 => "Rp150.000".
+ * Uses fixed locale to avoid hydration mismatch.
  */
 export function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  // Fixed formatting to avoid SSR/client locale differences
+  return "Rp" + amount.toLocaleString("id-ID");
 }
 
 /**

@@ -121,7 +121,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <>
-      <div className="group rounded-xl border border-[#efe2c7] bg-white p-4 shadow-sm transition hover:border-[#A0522D] hover:shadow-md">
+      <div className="group rounded-xl border border-[#efe2c7] bg-white shadow-sm transition hover:border-[#A0522D] hover:shadow-md flex flex-col h-full">
         <div className="aspect-square overflow-hidden rounded-lg bg-[#FCE9C8]">
           {product.imageUrl ? (
             <img
@@ -136,7 +136,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <img src="/images/products/placeholder.svg" alt={product.name} className="h-full w-full object-cover" />
           )}
         </div>
-        <div className="mt-3">
+        <div className="p-4 flex flex-col flex-1">
           <p className="text-xs text-[#A0522D] uppercase tracking-wider">{product.category?.name}</p>
           <h3 className="mt-0.5 text-base font-semibold text-[#6b4a2b]">{product.name}</h3>
           <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-[#5a4a3a]">{product.description}</p>
@@ -154,7 +154,7 @@ export function ProductCard({ product }: ProductCardProps) {
               ))}
             </div>
           )}
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-auto pt-3 flex items-center justify-between">
             <span className="text-lg font-bold text-[#6b4a2b]">{formatRupiah(finalPrice)}</span>
             {stockLabel && (
               <span className={`text-xs font-medium ${isSoldOut ? "text-red-600" : "text-[#A0522D]"}`}>{stockLabel}</span>
