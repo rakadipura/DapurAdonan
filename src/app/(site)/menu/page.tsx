@@ -105,7 +105,7 @@ export default async function MenuPage() {
               Lihat semua
             </a>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 max-sm:grid-cols-2 max-sm:gap-3">
             {featuredProducts.map((product: Product & { variants?: ProductVariant[]; addOns?: AddOn[] }) => (
               <ProductCard key={product.id} product={product} />
             ))}

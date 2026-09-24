@@ -6,7 +6,7 @@ interface SiteFooterProps {
 
 export function SiteFooter({ storeName, wide = false }: SiteFooterProps) {
   return (
-    <footer className="border-t border-[#efe2c7] bg-[#fff6e6] px-4 py-8 sm:px-6">
+    <footer className="border-t border-[#efe2c7] bg-[#fff6e6] px-4 py-8 sm:px-6 max-sm:py-5">
       <div className={`mx-auto ${wide ? "max-w-6xl" : "max-w-3xl"}`}>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>

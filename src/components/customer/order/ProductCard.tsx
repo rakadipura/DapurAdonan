@@ -78,7 +78,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   if (product.isCustomCake) {
     return (
-      <div className="group rounded-xl border border-[#efe2c7] bg-white p-4 shadow-sm transition hover:border-[#A0522D] hover:shadow-md">
+      <div className="group rounded-xl border border-[#efe2c7] bg-white p-4 shadow-sm transition hover:border-[#A0522D] hover:shadow-md max-sm:p-3">
         <div className="aspect-square overflow-hidden rounded-lg bg-[#FCE9C8]">
           {product.imageUrl ? (
             <img
@@ -95,13 +95,13 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
         <div className="mt-3">
           <p className="text-xs text-[#A0522D] uppercase tracking-wider">{product.category?.name}</p>
-          <h3 className="mt-0.5 text-base font-semibold text-[#6b4a2b]">{product.name}</h3>
-          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-[#5a4a3a]">{product.description}</p>
+          <h3 className="mt-0.5 text-base font-semibold text-[#6b4a2b] max-sm:text-sm">{product.name}</h3>
+          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-[#5a4a3a] max-sm:text-xs">{product.description}</p>
           {product.leadTimeDays > 0 && (
             <p className="mt-1 text-xs text-[#A0522D] font-medium">Pesan minimal {product.leadTimeDays} hari sebelumnya</p>
           )}
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-lg font-bold text-[#6b4a2b]">Mulai {formatRupiah(product.basePrice)}</span>
+            <span className="text-lg font-bold text-[#6b4a2b] max-sm:text-base">Mulai {formatRupiah(product.basePrice)}</span>
             {stockLabel && (
               <span className={`text-xs font-medium ${isSoldOut ? "text-red-600" : "text-[#A0522D]"}`}>{stockLabel}</span>
             )}
@@ -110,7 +110,7 @@ export function ProductCard({ product }: ProductCardProps) {
             type="button"
             onClick={() => setShowOptions(true)}
             disabled={isSoldOut}
-            className="mt-3 w-full rounded-lg border-0 bg-[#A0522D] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8b4513] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-3 w-full rounded-lg border-0 bg-[#A0522D] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8b4513] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed max-sm:px-2 max-sm:py-1.5 max-sm:text-xs"
           >
             Pesan Custom
           </button>
@@ -136,10 +136,10 @@ export function ProductCard({ product }: ProductCardProps) {
             <img src="/images/products/placeholder.svg" alt={product.name} className="h-full w-full object-cover" />
           )}
         </div>
-        <div className="p-4 flex flex-col flex-1">
+        <div className="p-4 flex flex-col flex-1 max-sm:p-3">
           <p className="text-xs text-[#A0522D] uppercase tracking-wider">{product.category?.name}</p>
-          <h3 className="mt-0.5 text-base font-semibold text-[#6b4a2b]">{product.name}</h3>
-          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-[#5a4a3a]">{product.description}</p>
+          <h3 className="mt-0.5 text-base font-semibold text-[#6b4a2b] max-sm:text-sm">{product.name}</h3>
+          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-[#5a4a3a] max-sm:text-xs">{product.description}</p>
           {product.allergens.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {product.allergens.map((a) => (
@@ -155,7 +155,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
           <div className="mt-auto pt-3 flex items-center justify-between">
-            <span className="text-lg font-bold text-[#6b4a2b]">{formatRupiah(finalPrice)}</span>
+            <span className="text-lg font-bold text-[#6b4a2b] max-sm:text-base">{formatRupiah(finalPrice)}</span>
             {stockLabel && (
               <span className={`text-xs font-medium ${isSoldOut ? "text-red-600" : "text-[#A0522D]"}`}>{stockLabel}</span>
             )}
@@ -164,7 +164,7 @@ export function ProductCard({ product }: ProductCardProps) {
             type="button"
             onClick={() => setShowOptions(true)}
             disabled={isSoldOut}
-            className="mt-3 w-full rounded-lg border-0 bg-[#A0522D] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8b4513] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-3 w-full rounded-lg border-0 bg-[#A0522D] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8b4513] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed max-sm:px-2 max-sm:py-1.5 max-sm:text-xs"
           >
             Tambah ke Keranjang
           </button>

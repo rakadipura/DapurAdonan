@@ -40,7 +40,7 @@ export function FilterableProductGrid({ products }: FilterableProductGridProps) 
           Tidak ada produk di kategori ini.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-sm:grid-cols-2 max-sm:gap-3">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

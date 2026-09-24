@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { MenuIcon, XIcon } from "lucide-react";
 
 export type SiteNavKey = "beranda" | "booking" | "status" | "riwayat" | "kontak";
 
@@ -30,17 +32,30 @@ interface SiteHeaderProps {
 
 /**
  * Single shared top navigation, rendered once from the (site) layout.
- * The divider uses an inline style (not a Tailwind class) so it can never
- * be dropped by the CSS compiler — it always renders.
+ * Desktop: inline links with dividers (inline-styled so they always render).
+ * Mobile: hamburger button opening a stacked menu.
  */
 export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
   const pathname = usePathname();
   const active = activeKeyForPath(pathname);
+  const [open, setOpen] = useState(false);
+
+  const desktopLinkCls = (key: SiteNavKey) =>
+    `whitespace-nowrap underline-offset-2 transition hover:text-[#A0522D] ${
+      active === key
+        ? "font-semibold text-[#A0522D] underline"
+        : "hover:underline"
+    }`;
+
+  const mobileLinkCls = (key: SiteNavKey) =>
+    `block border-b border-[#efe2c7] py-2.5 text-sm font-medium transition last:border-0 hover:text-[#A0522D] ${
+      active === key ? "font-semibold text-[#A0522D]" : "text-[#6b4a2b]"
+    }`;
 
   return (
     <header className="sticky top-0 z-30 bg-[#fffaf0]/95 backdrop-blur border-b border-[#efe2c7]">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
+        <Link href="/" className="flex shrink-0 items-center gap-2" onClick={() => setOpen(false)}>
           {logoUrl && (
             <img src={logoUrl} alt={storeName} className="h-8 w-auto" />
           )}
@@ -48,9 +63,11 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
             {storeName}
           </span>
         </Link>
+
+        {/* Desktop nav with dividers */}
         <nav
           aria-label="Navigasi utama"
-          className="flex flex-wrap items-center justify-end gap-y-1 text-sm font-medium text-[#6b4a2b]"
+          className="flex flex-wrap items-center justify-end gap-y-1 text-sm font-medium text-[#6b4a2b] max-md:hidden"
         >
           {NAV_ITEMS.map((item, index) =>
             index === 0 ? (
@@ -58,11 +75,7 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
                 key={item.key}
                 href={item.href}
                 aria-current={active === item.key ? "page" : undefined}
-                className={`whitespace-nowrap underline-offset-2 transition hover:text-[#A0522D] ${
-                  active === item.key
-                    ? "font-semibold text-[#A0522D] underline"
-                    : "hover:underline"
-                }`}
+                className={desktopLinkCls(item.key)}
               >
                 {item.label}
               </Link>
@@ -83,11 +96,7 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
                 <Link
                   href={item.href}
                   aria-current={active === item.key ? "page" : undefined}
-                  className={`whitespace-nowrap underline-offset-2 transition hover:text-[#A0522D] ${
-                    active === item.key
-                      ? "font-semibold text-[#A0522D] underline"
-                      : "hover:underline"
-                  }`}
+                  className={desktopLinkCls(item.key)}
                 >
                   {item.label}
                 </Link>
@@ -95,7 +104,38 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
             ),
           )}
         </nav>
+
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#e6c98a] bg-white text-[#6b4a2b] transition hover:border-[#A0522D] md:hidden"
+          aria-expanded={open}
+          aria-label={open ? "Tutup menu navigasi" : "Buka menu navigasi"}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? <XIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+        </button>
       </div>
+
+      {/* Mobile menu panel */}
+      {open && (
+        <nav
+          aria-label="Navigasi seluler"
+          className="border-t border-[#efe2c7] bg-[#fffaf0] px-4 pb-3 pt-1 sm:px-6 md:hidden"
+        >
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              aria-current={active === item.key ? "page" : undefined}
+              className={mobileLinkCls(item.key)}
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      )}
     </header>
   );
 }
