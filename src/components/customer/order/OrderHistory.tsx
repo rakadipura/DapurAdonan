@@ -50,7 +50,7 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-700",
 };
 
-export function OrderHistory() {
+export function OrderHistory({ showHeader = true }: { showHeader?: boolean } = {}) {
   const [phone, setPhone] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -103,10 +103,9 @@ export function OrderHistory() {
     });
   };
 
-  return (
-    <div className="min-h-screen bg-[#fffaf0] px-4 py-12 sm:px-6 sm:py-20">
-      <div className="mx-auto max-w-3xl">
-        {/* Header */}
+  const inner = (
+    <>
+      {showHeader && (
         <header className="mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
             ← Kembali ke Toko Mini Moni
@@ -116,6 +115,7 @@ export function OrderHistory() {
             Masukkan nomor telepon untuk melihat riwayat pesanan Anda.
           </p>
         </header>
+      )}
 
         {/* Search Form */}
         <form onSubmit={handleSubmit} className="mb-6 rounded-2xl border border-[#efe2c7] bg-white p-6 shadow-sm">
@@ -302,11 +302,22 @@ export function OrderHistory() {
           </div>
         )}
 
-        <footer className="mt-10 border-t border-[#efe2c7] pt-6 text-center text-xs text-[#5a4a3a]">
-          <p>Toko Mini Moni · Jam operasional 09.00 – 17.00 WIB</p>
-          <p>Hubungi kami via WhatsApp: 0812-3456-7890</p>
-        </footer>
-      </div>
+        {showHeader && (
+          <footer className="mt-10 border-t border-[#efe2c7] pt-6 text-center text-xs text-[#5a4a3a]">
+            <p>Toko Mini Moni · Jam operasional 09.00 – 17.00 WIB</p>
+            <p>Hubungi kami via WhatsApp: 0812-3456-7890</p>
+          </footer>
+        )}
+    </>
+  );
+
+  if (!showHeader) {
+    return <div className="mx-auto max-w-3xl">{inner}</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#fffaf0] px-4 py-12 sm:px-6 sm:py-20">
+      <div className="mx-auto max-w-3xl">{inner}</div>
     </div>
   );
 }

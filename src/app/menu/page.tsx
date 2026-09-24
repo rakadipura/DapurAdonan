@@ -3,8 +3,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCustomerFacingSettings } from "@/lib/settings";
 import { SessionProvider } from "@/components/customer/SessionProvider";
+import { SiteHeader } from "@/components/customer/layout/SiteHeader";
+import { SiteFooter } from "@/components/customer/layout/SiteFooter";
 import { OrderForm } from "@/components/customer/order/OrderForm";
 import { ProductCard } from "@/components/customer/order/ProductCard";
+import { FilterableProductGrid } from "@/components/customer/menu/FilterableProductGrid";
 import type { Product, ProductVariant, AddOn } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -57,30 +60,7 @@ export default async function MenuPage() {
   return (
     <SessionProvider>
       <div className="min-h-screen bg-[#fffaf0]">
-        {/* Header */}
-        <header className="sticky top-0 z-30 bg-[#fffaf0]/95 backdrop-blur border-b border-[#efe2c7]">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-            <Link href="/" className="flex items-center gap-2">
-              {settings.logoUrl && (
-                <img src={settings.logoUrl} alt={settings.storeName} className="h-8 w-auto" />
-              )}
-              <span className="text-xl font-semibold tracking-tight text-[#6b4a2b]">
-                {settings.storeName}
-              </span>
-            </Link>
-            <nav className="flex gap-4 text-sm font-medium text-[#6b4a2b]">
-              <Link href="/menu" className="hover:text-[#A0522D] underline underline-offset-2">
-                Menu
-              </Link>
-              <Link href="/booking" className="hover:text-[#A0522D] underline underline-offset-2">
-                Booking
-              </Link>
-              <Link href="/#kontak" className="hover:text-[#A0522D] underline underline-offset-2">
-                Kontak
-              </Link>
-            </nav>
-          </div>
-        </header>
+        <SiteHeader storeName={settings.storeName} logoUrl={settings.logoUrl} active="beranda" />
 
         {/* Hero */}
         <section className="relative bg-[#FDF6E3] overflow-hidden">
@@ -146,43 +126,7 @@ export default async function MenuPage() {
             </p>
           </div>
 
-          {/* Categories tabs with images */}
-          <div className="mb-6 flex flex-wrap gap-2">
-            <a
-              href="#"
-              className="rounded-full border border-[#e6c98a] bg-white px-4 py-1.5 text-sm font-medium text-[#6b4a2b] transition hover:border-[#A0522D]"
-            >
-              Semua
-            </a>
-            {categories.map((cat: { id: number; name: string; slug: string; imageUrl: string | null }) => (
-              <a
-                key={cat.id}
-                href={`/menu?category=${cat.slug}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#e6c98a] bg-white px-4 py-1.5 text-sm font-medium text-[#6b4a2b] transition hover:border-[#A0522D]"
-              >
-                {cat.imageUrl && (
-                  <img
-                    src={cat.imageUrl}
-                    alt={cat.name}
-                    className="h-5 w-5 rounded-full object-cover"
-                  />
-                )}
-                {cat.name}
-              </a>
-            ))}
-          </div>
-
-          {productsWithPrice.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#e6c98a] bg-white/60 p-8 text-center text-sm text-[#5a4a3a]">
-              Belum ada produk. Hubungi admin untuk menambahkan menu.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {productsWithPrice.map((product: Product & { variants?: ProductVariant[]; addOns?: AddOn[] }) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
+          <FilterableProductGrid products={productsWithPrice} />
         </section>
 
         {/* Order form */}
@@ -203,22 +147,7 @@ export default async function MenuPage() {
         </section>
 
         {/* Footer */}
-        <footer id="kontak" className="border-t border-[#efe2c7] bg-[#fff6e6] px-4 py-8 sm:px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-[#6b4a2b]">Toko Mini Moni</p>
-                <p className="mt-1 text-xs text-[#5a4a3a]">
-                  Hadir setiap hari untuk kebutuhan jajanan Anda.
-                </p>
-              </div>
-              <div className="text-sm text-[#5a4a3a]">
-                <p className="mb-1">Jam operasional: 09.00 – 17.00 WIB</p>
-                <p className="text-xs">WhatsApp: 0812-3456-7890</p>
-              </div>
-            </div>
-          </div>
-        </footer>
+        <SiteFooter storeName={settings.storeName} wide />
       </div>
 </SessionProvider>
   );

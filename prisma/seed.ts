@@ -271,7 +271,7 @@ async function main() {
       { zone: "Lokal", baseFee: 15000, perKm: 5000, maxKm: 10, freeMin: 80000 },
     ]) },
     { key: "adminPasswordHash", value: "REPLACE_WITH_BCRYPT_HASH" },
-    { key: "waNumber", value: "6281234567890" },
+    { key: "waNumber", value: "6281802003456" },
     // Branding settings
     { key: "storeName", value: "Toko Mini Moni" },
     { key: "storeTagline", value: "Roti, Kue, dan Jajanan Sehat" },

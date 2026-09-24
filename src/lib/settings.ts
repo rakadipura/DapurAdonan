@@ -172,7 +172,7 @@ export function wibTomorrow(): string {
 
 export async function getWhatsAppNumber(): Promise<string> {
   const raw = await getRaw("waNumber");
-  return raw || "6281234567890";
+  return raw || "6281802003456";
 }
 
 export async function getStoreName(): Promise<string> {
