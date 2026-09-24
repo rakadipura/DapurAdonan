@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCustomerFacingSettings } from "@/lib/settings";
-import { SessionProvider } from "@/components/customer/SessionProvider";
-import { SiteHeader } from "@/components/customer/layout/SiteHeader";
-import { SiteFooter } from "@/components/customer/layout/SiteFooter";
 import { OrderForm } from "@/components/customer/order/OrderForm";
 import { ProductCard } from "@/components/customer/order/ProductCard";
 import { FilterableProductGrid } from "@/components/customer/menu/FilterableProductGrid";
@@ -12,7 +8,12 @@ import type { Product, ProductVariant, AddOn } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function MenuPage() {
+export const metadata: Metadata = {
+  title: "Toko Mini Moni — Roti, Kue, dan Jajanan Sehat",
+  description: "Toko Mini Moni menyediakan roti tawar, kue kering, ronde kue, dan minuman segar. Pesan untuk diambil atau dikirim.",
+};
+
+export default async function HomePage() {
   const [categories, products, settings, todayOrders] = await Promise.all([
     prisma.category.findMany({
       where: { isVisible: true },
@@ -58,9 +59,7 @@ export default async function MenuPage() {
   const featuredProducts = productsWithPrice.slice(0, 4);
 
   return (
-    <SessionProvider>
-      <div className="min-h-screen bg-[#fffaf0]">
-        <SiteHeader storeName={settings.storeName} logoUrl={settings.logoUrl} active="beranda" />
+    <>
 
         {/* Hero */}
         <section className="relative bg-[#FDF6E3] overflow-hidden">
@@ -87,7 +86,7 @@ export default async function MenuPage() {
                 Toko Mini Moni hadir dengan rangkaian kue kering, ronde kue, roti, dan minuman segar yang dibuat dengan bahan pilihan. Pesan untuk diambil atau siap antar.
               </p>
               <div className="flex flex-wrap gap-3">
-                <a href="/menu" className="inline-flex items-center justify-center rounded-xl border-0 bg-[#A0522D] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#8b4513]">
+                <a href="#produk" className="inline-flex items-center justify-center rounded-xl border-0 bg-[#A0522D] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#8b4513]">
                   Lihat Menu
                 </a>
                 <a href="/booking" className="inline-flex items-center justify-center rounded-xl border border-[#e6c98a] bg-white px-6 py-3 text-sm font-semibold text-[#6b4a2b] shadow-sm transition hover:border-[#A0522D]">
@@ -101,12 +100,12 @@ export default async function MenuPage() {
         </section>
 
         {/* Featured products */}
-        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <section id="menu" className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-[#6b4a2b]">
               Pilihan Khas
             </h2>
-            <a href="/menu#produk" className="text-sm font-medium text-[#A0522D] underline underline-offset-2">
+            <a href="#produk" className="text-sm font-medium text-[#A0522D] underline underline-offset-2">
               Lihat semua
             </a>
           </div>
@@ -146,9 +145,6 @@ export default async function MenuPage() {
           </div>
         </section>
 
-        {/* Footer */}
-        <SiteFooter storeName={settings.storeName} wide />
-      </div>
-</SessionProvider>
+    </>
   );
 }

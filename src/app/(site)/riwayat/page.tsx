@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getCustomerFacingSettings } from "@/lib/settings";
-import { SessionProvider } from "@/components/customer/SessionProvider";
-import { SiteHeader } from "@/components/customer/layout/SiteHeader";
-import { SiteFooter } from "@/components/customer/layout/SiteFooter";
 import { OrderHistory } from "@/components/customer/order/OrderHistory";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +14,6 @@ export default async function RiwayatPesananPage() {
   const settings = await getCustomerFacingSettings();
 
   return (
-    <SessionProvider>
-      <div className="min-h-screen bg-[#fffaf0]">
-        <SiteHeader storeName={settings.storeName} logoUrl={settings.logoUrl} active="riwayat" />
 
         <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-20">
           <Link href="/" className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
@@ -32,10 +26,5 @@ export default async function RiwayatPesananPage() {
 
           <OrderHistory showHeader={false} />
         </main>
-
-        {/* Footer */}
-        <SiteFooter storeName={settings.storeName} />
-      </div>
-    </SessionProvider>
   );
 }

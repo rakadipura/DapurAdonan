@@ -38,11 +38,10 @@ export default async function StatusPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#fffaf0] px-4 py-12 sm:px-6 sm:py-20">
-      <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-20">
         <header className="mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-[#A0522D] underline underline-offset-2">
-            ← Kembali ke Toko Mini Moni
+            ← Kembali ke Beranda
           </Link>
           <h1 className="mt-4 text-2xl font-bold text-[#6b4a2b]">Cek Status</h1>
           <p className="mt-1 text-sm text-[#5a4a3a]">
@@ -212,11 +211,6 @@ export default async function StatusPage({
             Masukkan kode dan nomor telepon di atas untuk memeriksa status.
           </div>
         )}
-
-        <footer className="mt-10 border-t border-[#efe2c7] pt-6 text-center text-xs text-[#5a4a3a]">
-          <p>Toko Mini Moni · 09.00 – 17.00 WIB</p>
-        </footer>
-      </div>
     </div>
   );
 }

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export type SiteNavKey = "beranda" | "booking" | "status" | "riwayat" | "kontak";
 
@@ -10,13 +13,30 @@ const NAV_ITEMS: Array<{ key: SiteNavKey; label: string; href: string }> = [
   { key: "kontak", label: "Kontak", href: "/kontak" },
 ];
 
+function activeKeyForPath(pathname: string): SiteNavKey | undefined {
+  if (pathname === "/") return "beranda";
+  if (pathname === "/menu" || pathname.startsWith("/menu/")) return "beranda";
+  if (pathname.startsWith("/booking")) return "booking";
+  if (pathname === "/status" || pathname.startsWith("/order")) return "status";
+  if (pathname === "/riwayat" || pathname.startsWith("/account")) return "riwayat";
+  if (pathname.startsWith("/kontak")) return "kontak";
+  return undefined;
+}
+
 interface SiteHeaderProps {
   storeName: string;
   logoUrl?: string | null;
-  active?: SiteNavKey;
 }
 
-export function SiteHeader({ storeName, logoUrl, active }: SiteHeaderProps) {
+/**
+ * Single shared top navigation, rendered once from the (site) layout.
+ * The divider uses an inline style (not a Tailwind class) so it can never
+ * be dropped by the CSS compiler — it always renders.
+ */
+export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
+  const pathname = usePathname();
+  const active = activeKeyForPath(pathname);
+
   return (
     <header className="sticky top-0 z-30 bg-[#fffaf0]/95 backdrop-blur border-b border-[#efe2c7]">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
@@ -48,7 +68,11 @@ export function SiteHeader({ storeName, logoUrl, active }: SiteHeaderProps) {
               </Link>
             ) : (
               <span key={item.key} className="flex items-center whitespace-nowrap">
-                <span aria-hidden="true" className="mx-3 h-4 w-px shrink-0 bg-[#A0522D]/50" />
+                <span
+                  aria-hidden="true"
+                  className="mx-4 shrink-0"
+                  style={{ width: 1, height: 16, backgroundColor: "rgba(160, 82, 45, 0.55)" }}
+                />
                 <Link
                   href={item.href}
                   aria-current={active === item.key ? "page" : undefined}
