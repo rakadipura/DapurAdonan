@@ -67,7 +67,7 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
         {/* Desktop nav with dividers */}
         <nav
           aria-label="Navigasi utama"
-          className="flex flex-wrap items-center justify-end gap-y-1 text-sm font-medium text-[#6b4a2b] max-md:hidden"
+          className="flex flex-wrap items-center justify-end gap-y-1 text-sm font-medium text-[#6b4a2b] max-sm:hidden"
         >
           {NAV_ITEMS.map((item, index) =>
             index === 0 ? (
@@ -108,7 +108,7 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
         {/* Mobile hamburger */}
         <button
           type="button"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#e6c98a] bg-white text-[#6b4a2b] transition hover:border-[#A0522D] md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#e6c98a] bg-white text-[#6b4a2b] transition hover:border-[#A0522D] sm:hidden"
           aria-expanded={open}
           aria-label={open ? "Tutup menu navigasi" : "Buka menu navigasi"}
           onClick={() => setOpen((v) => !v)}
@@ -121,7 +121,7 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
       {open && (
         <nav
           aria-label="Navigasi seluler"
-          className="border-t border-[#efe2c7] bg-[#fffaf0] px-4 pb-3 pt-1 sm:px-6 md:hidden"
+          className="border-t border-[#efe2c7] bg-[#fffaf0] px-4 pb-3 pt-1 sm:hidden"
         >
           {NAV_ITEMS.map((item) => (
             <Link
