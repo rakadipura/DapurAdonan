@@ -1,9 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MenuIcon, XIcon } from "lucide-react";
+
+/**
+ * Mobile = viewport below the sm breakpoint (640px).
+ * Determined in JS (matchMedia) so the correct nav renders even if a
+ * stale/cached stylesheet is ever served. Defaults to desktop so SSR
+ * and desktop first-paint are always the full nav.
+ */
+function useIsMobile(breakpointPx = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpointPx - 1}px)`);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [breakpointPx]);
+  return isMobile;
+}
 
 export type SiteNavKey = "beranda" | "booking" | "status" | "riwayat" | "kontak";
 
@@ -39,6 +57,7 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
   const pathname = usePathname();
   const active = activeKeyForPath(pathname);
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const desktopLinkCls = (key: SiteNavKey) =>
     `whitespace-nowrap underline-offset-2 transition hover:text-[#A0522D] ${
@@ -64,7 +83,8 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
           </span>
         </Link>
 
-        {/* Desktop nav with dividers */}
+        {/* Desktop nav with dividers (JS-gated: never rendered on mobile) */}
+        {!isMobile && (
         <nav
           aria-label="Navigasi utama"
           className="flex flex-wrap items-center justify-end gap-y-1 text-sm font-medium text-[#6b4a2b] max-sm:hidden"
@@ -104,8 +124,10 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
             ),
           )}
         </nav>
+        )}
 
-        {/* Mobile hamburger */}
+        {/* Mobile hamburger (JS-gated: never rendered on desktop) */}
+        {isMobile && (
         <button
           type="button"
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#e6c98a] bg-white text-[#6b4a2b] transition hover:border-[#A0522D] sm:hidden"
@@ -115,10 +137,11 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
         >
           {open ? <XIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
         </button>
+        )}
       </div>
 
       {/* Mobile menu panel */}
-      {open && (
+      {isMobile && open && (
         <nav
           aria-label="Navigasi seluler"
           className="border-t border-[#efe2c7] bg-[#fffaf0] px-4 pb-3 pt-1 sm:hidden"
