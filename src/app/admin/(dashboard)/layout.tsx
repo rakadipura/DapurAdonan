@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   title: "Admin — Toko Mini Moni",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   if (!(await isAdminAuthenticated())) redirect("/admin/login");
 

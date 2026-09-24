@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   description: "Toko Mini Moni menyediakan roti tawar, kue kering, ronde kue, dan minuman segar. Pesan untuk diambil atau dikirim.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const settings = await getCustomerFacingSettings();
   
