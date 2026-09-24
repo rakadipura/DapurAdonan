@@ -70,8 +70,15 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
               <span key={item.key} className="flex items-center whitespace-nowrap">
                 <span
                   aria-hidden="true"
-                  className="mx-4 shrink-0"
-                  style={{ width: 1, height: 16, backgroundColor: "rgba(160, 82, 45, 0.55)" }}
+                  className="shrink-0"
+                  style={{
+                    width: 1,
+                    height: 16,
+                    marginLeft: 16,
+                    marginRight: 16,
+                    flexShrink: 0,
+                    backgroundColor: "rgba(160, 82, 45, 0.55)",
+                  }}
                 />
                 <Link
                   href={item.href}
