@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { normalizePhone } from "@/lib/regex";
 import { createOrderSchema } from "@/validations/orders";
-import { createOrder } from "@/lib/orders";
+import { orderIntake, OrderIntakeError } from "@/lib/order-intake";
 import { revalidatePath } from "next/cache";
 
 export async function GET(req: NextRequest) {
@@ -16,11 +15,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const normalizedPhone = normalizePhone(phone);
-
     const orders = await prisma.order.findMany({
       where: {
-        customerPhone: normalizedPhone,
+        customerPhone: phone,
       },
       include: {
         itemsOrder: {
@@ -102,31 +99,9 @@ function getFieldDisplayName(field: string): string {
   return names[field] || field;
 }
 
-function getPhoneErrorDetail(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 8) {
-    return `Nomor telepon terlalu pendek (${digits.length} digit, minimal 8)`;
-  }
-  if (digits.length > 13) {
-    return `Nomor telepon terlalu panjang (${digits.length} digit, maksimal 13)`;
-  }
-  if (!/^(\+?62|0)8/.test(phone)) {
-    return "Nomor telepon harus diawali 08 atau +628";
-  }
-  if (!/^(\+?62|0)8[0-9]{6,11}$/.test(phone.replace(/\D/g, ""))) {
-    return "Format nomor tidak valid (contoh: 081234567890)";
-  }
-  return "Format nomor telepon tidak valid";
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-
-    // Normalize phone before validation
-    if (body.customerPhone) {
-      body.customerPhone = normalizePhone(body.customerPhone);
-    }
 
     const parsed = createOrderSchema.safeParse(body);
 
@@ -134,41 +109,21 @@ export async function POST(req: NextRequest) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
       const detailedMessage = formatZodError(fieldErrors);
 
-      // Add specific phone error detail if phone field has error
-      let phoneDetail = "";
-      if (fieldErrors.customerPhone && body.customerPhone) {
-        phoneDetail = getPhoneErrorDetail(body.customerPhone);
-      }
-
       return NextResponse.json(
         {
           error: "Data tidak valid",
           message: detailedMessage,
-          phoneDetail,
           details: fieldErrors,
         },
         { status: 400 },
       );
     }
 
-    // Validate email format if provided
-    const email = parsed.data.customerEmail;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (email && email !== "" && !emailRegex.test(email)) {
-      return NextResponse.json(
-        {
-          error: "Data tidak valid",
-          message: "Email: Format email tidak valid (contoh: nama@domain.com)",
-          details: { customerEmail: ["Format email tidak valid"] },
-        },
-        { status: 400 },
-      );
-    }
-
-    const order = await createOrder({
+    const order = await orderIntake.accept({
       ...parsed.data,
-      customerEmail: email && email !== "" ? email : undefined,
+      customerEmail: parsed.data.customerEmail && parsed.data.customerEmail !== "" ? parsed.data.customerEmail : undefined,
     });
+
     revalidatePath("/menu");
     return NextResponse.json(
       {
@@ -179,8 +134,15 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("POST /api/orders failed:", error);
-    const message =
-      error instanceof Error ? error.message : "Gagal membuat pesanan";
+
+    if (error instanceof OrderIntakeError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code, details: error.details },
+        { status: 400 },
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Gagal membuat pesanan";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
