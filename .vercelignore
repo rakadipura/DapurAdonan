@@ -1,0 +1,47 @@
+# Vercel deployment ignore file
+# Exclude files not needed for deployment
+
+# Dependencies
+node_modules
+
+# Build outputs
+.next
+out
+build
+dist
+
+# Prisma
+prisma/migrations
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage
+.nyc_output
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Uploads (ephemeral on Vercel)
+uploads
+
+# TypeScript
+*.tsbuildinfo

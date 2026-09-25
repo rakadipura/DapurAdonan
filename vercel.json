@@ -24,5 +24,11 @@
         { "key": "X-XSS-Protection", "value": "1; mode=block" }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/payments/proof/:path*",
+      "destination": "/api/payments/proof/:path*"
+    }
   ]
 }

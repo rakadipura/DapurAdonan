@@ -12,9 +12,26 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  if (!(await isAdminAuthenticated())) redirect("/admin/login");
+  let authenticated = false;
+  let storeName = "Toko Mini Moni";
 
-  const storeName = await getStoreName();
+  try {
+    authenticated = await isAdminAuthenticated();
+  } catch (authError) {
+    console.error("Admin auth check failed:", authError);
+    redirect("/admin/login");
+  }
+
+  if (!authenticated) {
+    redirect("/admin/login");
+  }
+
+  try {
+    storeName = await getStoreName();
+  } catch (storeError) {
+    console.error("Failed to load store name:", storeError);
+    // Continue with default store name
+  }
 
   return (
     <div className="min-h-screen bg-[#fffaf0]">
