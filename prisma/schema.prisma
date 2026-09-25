@@ -5,6 +5,9 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // For serverless (Vercel), use connection pooling via PgBouncer
+  // Add ?pgbouncer=true&connection_limit=1 to your DATABASE_URL
+  // Or use Prisma Data Proxy for managed connection pooling
 }
 
 model Category {
