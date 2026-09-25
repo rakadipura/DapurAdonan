@@ -56,7 +56,7 @@ export class BookingIntake {
           updatedAt: now,
         },
         include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
-      });
+      }) as { id: number; slot: { id: number; name: string; startTime: string; endTime: string } };
 
       // 4. Create pre-orders linked to booking
       const orders: OrderWithItems[] = [];

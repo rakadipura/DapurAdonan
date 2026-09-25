@@ -45,14 +45,14 @@ export interface PrismaLike {
     } | null>;
   };
   booking: {
-    create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<any>;
+    create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;
     findMany: (args: { where: Record<string, unknown>; select: Record<string, unknown> }) => Promise<Record<string, unknown>[]>;
   };
   product: {
     findMany: (args: { where: { id: { in: number[] } }; select: Record<string, unknown> }) => Promise<unknown[]>;
   };
   order: {
-    create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<any>;
+    create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;
   };
   orderItem: {
     groupBy: (args: Record<string, unknown>) => Promise<{ _sum: { qty: number | null } }[]>;
@@ -78,10 +78,10 @@ export interface TransactionLike {
     groupBy: (args: Record<string, unknown>) => Promise<{ _sum: { qty: number | null } }[]>;
   };
   booking: {
-    create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<any>;
+    create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;
   };
   order: {
-    create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<any>;
+    create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;
   };
 }
 
