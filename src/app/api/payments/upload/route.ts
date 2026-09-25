@@ -61,8 +61,10 @@ export async function POST(req: NextRequest) {
 
     const filename = `${randomUUID()}${ext}`;
     const dir = uploadDir();
+    // @turbopackIgnore: true
     await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(path.join(/* @turbopackIgnore: true */ dir, filename), buffer);
+    // @turbopackIgnore: true
+    await fs.writeFile(path.join(dir, filename), buffer);
 
     const publicUrl = `/api/payments/proof/${filename}`;
 

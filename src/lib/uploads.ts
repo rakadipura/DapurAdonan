@@ -8,5 +8,9 @@ import path from "path";
  * Cloudinary when running serverless).
  */
 export function uploadDir(): string {
-  return process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
+  // Use a static, traceable path for Turbopack
+  // In production/Vercel, set UPLOAD_DIR env var to a static path
+  const baseDir = process.env.UPLOAD_DIR || "uploads";
+  // Return absolute path for fs operations
+  return path.resolve(baseDir);
 }
