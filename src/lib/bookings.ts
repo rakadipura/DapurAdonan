@@ -54,6 +54,18 @@ export interface BookingWithSlot {
   createdAt: Date;
   updatedAt: Date;
   noShowAt: Date | null;
+  preOrders?: Array<{
+    id: number;
+    code: string;
+    total: number;
+    status: string;
+    items: Array<{
+      productName: string;
+      variantName: string | null;
+      qty: number;
+      price: number;
+    }>;
+  }>;
 }
 
 export interface SlotAvailability {
@@ -387,7 +399,19 @@ export async function getBookings(filter: BookingListFilter = {}): Promise<Booki
 
   const bookings = await prisma.booking.findMany({
     where,
-    include: { slot: { select: { id: true, name: true, startTime: true, endTime: true } } },
+    include: {
+      slot: { select: { id: true, name: true, startTime: true, endTime: true } },
+      preOrders: {
+        include: {
+          itemsOrder: {
+            include: {
+              product: { select: { name: true } },
+              variant: { select: { name: true } },
+            },
+          },
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -469,6 +493,18 @@ function mapBookingWithSlot(booking: {
   updatedAt: Date;
   noShowAt: Date | null;
   slot: { id: number; name: string; startTime: string; endTime: string };
+  preOrders?: Array<{
+    id: number;
+    code: string;
+    total: number;
+    status: string;
+    itemsOrder: Array<{
+      product: { name: string } | null;
+      variant: { name: string } | null;
+      qty: number;
+      price: number;
+    }>;
+  }>;
 }): BookingWithSlot {
   return {
     id: booking.id,
@@ -487,5 +523,17 @@ function mapBookingWithSlot(booking: {
     createdAt: booking.createdAt,
     updatedAt: booking.updatedAt,
     noShowAt: booking.noShowAt,
+    preOrders: booking.preOrders?.map((order) => ({
+      id: order.id,
+      code: order.code,
+      total: order.total,
+      status: order.status,
+      items: order.itemsOrder.map((item) => ({
+        productName: item.product?.name ?? "Unknown",
+        variantName: item.variant?.name ?? null,
+        qty: item.qty,
+        price: item.price,
+      })),
+    })),
   };
 }

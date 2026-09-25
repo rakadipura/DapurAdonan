@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createBooking, getBooking } from "@/lib/bookings";
+import { BookingIntake, productionAdapter } from "@/lib/booking-intake";
 import { createBookingSchema } from "@/validations/bookings";
 import { revalidatePath } from "next/cache";
-import { normalizePhone } from "@/lib/regex";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -27,6 +26,7 @@ function getFieldDisplayName(field: string): string {
     name: "Nama",
     phone: "Nomor telepon",
     email: "Email",
+    menuItems: "Item menu",
   };
   return names[field] || field;
 }
@@ -48,13 +48,15 @@ function getPhoneErrorDetail(phone: string): string {
   return "Format nomor telepon tidak valid";
 }
 
+const bookingIntake = new BookingIntake(productionAdapter);
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
     // Normalize phone before validation
     if (body.phone) {
-      body.phone = normalizePhone(body.phone);
+      body.phone = body.phone.replace(/^0/, "+62");
     }
 
     const parsed = createBookingSchema.safeParse(body);
@@ -93,15 +95,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const booking = await createBooking({
+    const result = await bookingIntake.accept({
       ...parsed.data,
       email: email && email !== "" ? email : undefined,
+      menuItems: parsed.data.menuItems,
     });
+
     revalidatePath("/booking");
     return NextResponse.json(
       {
-        booking,
-        redirectUrl: `/booking/success?code=${booking.code}&phone=${encodeURIComponent(booking.phone)}`,
+        booking: result.booking,
+        orders: result.orders,
+        redirectUrl: `/booking/success?code=${result.booking.code}&phone=${encodeURIComponent(result.booking.phone)}`,
       },
       { status: 201 },
     );
@@ -125,6 +130,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const { getBooking } = await import("@/lib/bookings");
     const booking = await getBooking(code, phone);
     if (!booking) {
       return NextResponse.json({ error: "Booking tidak ditemukan" }, { status: 404 });

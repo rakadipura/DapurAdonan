@@ -95,6 +95,9 @@ model Booking {
   updatedAt  DateTime  @updatedAt
   noShowAt   DateTime?
 
+  // pre-orders linked to this booking
+  preOrders    Order[]
+
   @@index([date, slotId])
   @@index([phone])
   @@index([code])
@@ -137,12 +140,17 @@ model Order {
   updatedAt       DateTime      @updatedAt
   completedAt     DateTime?
 
+  // booking link (for pre-orders during table booking)
+  bookingId       Int?
+  booking         Booking?       @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
   itemsOrder      OrderItem[]
 
   @@index([pickupDate])
   @@index([status])
   @@index([customerPhone])
   @@index([code])
+  @@index([bookingId])
 }
 
 model OrderItem {

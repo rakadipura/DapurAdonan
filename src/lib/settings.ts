@@ -14,6 +14,13 @@ export interface DeliveryZone {
   freeMin: number;
 }
 
+export interface BookingMenuCategoryConfig {
+  categoryId: number;
+  categoryName: string;
+  isVisible: boolean;
+  sortOrder: number;
+}
+
 async function getRaw(key: string): Promise<string | null> {
   const row = await prisma.setting.findUnique({ where: { key } });
   return row?.value ?? null;
@@ -200,6 +207,16 @@ export async function getHeroImageUrl(): Promise<string> {
   return raw || "/images/hero-banner.svg";
 }
 
+export async function getBookingMenuCategoryConfig(): Promise<BookingMenuCategoryConfig[]> {
+  const raw = await getRaw("bookingMenuCategories");
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as BookingMenuCategoryConfig[];
+  } catch {
+    return [];
+  }
+}
+
 export async function getCustomerFacingSettings(): Promise<{
   pickupWindows: PickupWindow[];
   deliveryZones: DeliveryZone[];
@@ -210,8 +227,9 @@ export async function getCustomerFacingSettings(): Promise<{
   logoUrl: string;
   faviconUrl: string;
   heroImageUrl: string;
+  bookingMenuCategories: BookingMenuCategoryConfig[];
 }> {
-  const [windows, zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl] = await Promise.all([
+  const [windows, zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl, bookingMenuCategories] = await Promise.all([
     getPickupWindows(),
     getDeliveryZones(),
     getTransferInfo(),
@@ -221,6 +239,7 @@ export async function getCustomerFacingSettings(): Promise<{
     getLogoUrl(),
     getFaviconUrl(),
     getHeroImageUrl(),
+    getBookingMenuCategoryConfig(),
   ]);
-  return { pickupWindows: windows, deliveryZones: zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl };
+  return { pickupWindows: windows, deliveryZones: zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl, bookingMenuCategories };
 }

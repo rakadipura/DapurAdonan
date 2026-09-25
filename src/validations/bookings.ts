@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+const menuItemSchema = z.object({
+  productId: z.number().int().positive(),
+  variantId: z.number().int().positive().optional(),
+  qty: z.number().int().min(1).max(50, "Kuantitas terlalu besar"),
+  notes: z.string().max(500).optional(),
+  selectedAddOns: z.array(z.string()).optional(),
+});
+
 export const createBookingSchema = z
   .object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD"),
@@ -15,6 +23,8 @@ export const createBookingSchema = z
       .regex(/^(\+?62|0)8[0-9]{6,11}$/, "Format nomor telepon tidak valid"),
     email: z.string().email("Format email tidak valid").or(z.literal(""))
       .optional(),
+    // Optional menu items for pre-order during booking
+    menuItems: z.array(menuItemSchema).max(20, "Terlalu banyak item menu").optional(),
   });
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;

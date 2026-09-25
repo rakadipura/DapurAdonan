@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getAvailableSlots, getBookingDateOptions } from "@/lib/bookings";
-import { getBookingLeadHours, formatDateYMD } from "@/lib/settings";
-import { getCustomerFacingSettings } from "@/lib/settings";
+import { getBookingLeadHours, formatDateYMD, getCustomerFacingSettings } from "@/lib/settings";
 import { BookingFlow } from "@/components/customer/booking/BookingFlow";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +64,7 @@ export default async function BookingPage() {
             dateOptions={dateOptions}
             leadHours={leadHours}
             defaultDate={defaultDate}
+            bookingMenuCategories={settings.bookingMenuCategories}
           />
     </div>
   );

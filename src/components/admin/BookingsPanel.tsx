@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition, useCallback, useRef } from "react";
+import { ChevronDownIcon, ShoppingCartIcon } from "lucide-react";
 
 type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "RESCHEDULED" | "NO_SHOW" | "COMPLETED";
 
@@ -30,12 +31,28 @@ interface AdminBooking {
   partySize: number;
   name: string;
   phone: string;
+  preOrders?: Array<{
+    id: number;
+    code: string;
+    total: number;
+    status: string;
+    items: Array<{
+      productName: string;
+      variantName: string | null;
+      qty: number;
+      price: number;
+    }>;
+  }>;
 }
 
 interface BookingStats {
   todayBookings: number;
   pendingBookings: number;
   totalBookings: number;
+}
+
+function formatRupiah(amount: number): string {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
 }
 
 export function BookingsPanel() {
@@ -46,6 +63,7 @@ export function BookingsPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingCode, setPendingCode] = useState<string | null>(null);
+  const [expandedCode, setExpandedCode] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const mountedRef = useRef(true);
 
@@ -98,6 +116,10 @@ export function BookingsPanel() {
         setPendingCode(null);
       }
     });
+  };
+
+  const toggleExpand = (code: string) => {
+    setExpandedCode((prev) => (prev === code ? null : code));
   };
 
   return (
@@ -168,39 +190,115 @@ export function BookingsPanel() {
               <tr className="border-b border-[#efe2c7] text-left text-xs text-[#5a4a3a]">
                 <th className="px-4 py-3 font-medium">Kode</th>
                 <th className="px-4 py-3 font-medium">Nama</th>
-                <th className="px-4 py-3 font-medium">Tanggal &amp; Jadwal</th>
+                <th className="px-4 py-3 font-medium">Tanggal & Jadwal</th>
                 <th className="px-4 py-3 font-medium">Jumlah orang</th>
+                <th className="px-4 py-3 font-medium">Pre-order</th>
                 <th className="px-4 py-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
-              {bookings.map((booking) => (
-                <tr key={booking.code} className="border-b border-[#f2e9d5] last:border-0 align-top">
-                  <td className="px-4 py-3 font-mono font-semibold text-[#A0522D]">{booking.code}</td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-[#6b4a2b]">{booking.name}</p>
-                    <p className="text-xs text-[#5a4a3a]">{booking.phone}</p>
-                  </td>
-                  <td className="px-4 py-3 text-[#5a4a3a]">
-                    {booking.date} · {booking.slot.startTime}–{booking.slot.endTime}
-                  </td>
-                  <td className="px-4 py-3 text-[#6b4a2b]">{booking.partySize}</td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={booking.status}
-                      disabled={pendingCode === booking.code}
-                      onChange={(e) => handleStatusChange(booking.code, e.target.value as BookingStatus)}
-                      className="rounded-lg border border-[#e6c98a] bg-white px-2 py-1 text-xs text-[#6b4a2b] focus:border-[#A0522D] focus:outline-none disabled:opacity-50"
+              {bookings.map((booking) => {
+                const hasPreOrders = booking.preOrders && booking.preOrders.length > 0;
+                const isExpanded = expandedCode === booking.code;
+                const totalPreOrderItems = booking.preOrders?.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.qty, 0), 0) ?? 0;
+                const totalPreOrderAmount = booking.preOrders?.reduce((sum, o) => sum + o.total, 0) ?? 0;
+
+                return (
+                  <>
+                    <tr
+                      key={booking.code}
+                      className={`border-b border-[#f2e9d5] last:border-0 align-top ${hasPreOrders ? "cursor-pointer hover:bg-[#fffaf0]" : ""}`}
+                      onClick={hasPreOrders ? () => toggleExpand(booking.code) : undefined}
                     >
-                      {BOOKING_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {STATUS_LABELS[s]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
+                      <td className="px-4 py-3 font-mono font-semibold text-[#A0522D]">{booking.code}</td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-[#6b4a2b]">{booking.name}</p>
+                        <p className="text-xs text-[#5a4a3a]">{booking.phone}</p>
+                      </td>
+                      <td className="px-4 py-3 text-[#5a4a3a]">
+                        {booking.date} · {booking.slot.startTime}–{booking.slot.endTime}
+                      </td>
+                      <td className="px-4 py-3 text-[#6b4a2b]">{booking.partySize}</td>
+                      <td className="px-4 py-3 text-[#5a4a3a]">
+                        {hasPreOrders ? (
+                          <span className="flex items-center gap-1 text-[#A0522D] font-medium">
+                            <ShoppingCartIcon className="h-3.5 w-3.5" />
+                            {totalPreOrderItems} item · {formatRupiah(totalPreOrderAmount)}
+                          </span>
+                        ) : (
+                          <span className="text-[#d1a85e]">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={booking.status}
+                          disabled={pendingCode === booking.code}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(booking.code, e.target.value as BookingStatus);
+                          }}
+                          className="rounded-lg border border-[#e6c98a] bg-white px-2 py-1 text-xs text-[#6b4a2b] focus:border-[#A0522D] focus:outline-none disabled:opacity-50"
+                        >
+                          {BOOKING_STATUSES.map((s) => (
+                            <option key={s} value={s}>
+                              {STATUS_LABELS[s]}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      {hasPreOrders && (
+                        <td className="px-4 py-3 text-right text-[#A0522D]">
+                          <ChevronDownIcon
+                            className={`h-4 w-4 inline-block transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          />
+                        </td>
+                      )}
+                    </tr>
+                    {hasPreOrders && isExpanded && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-3 bg-[#fffaf0] border-t border-[#f2e9d5]">
+                          <div className="space-y-2 ml-4">
+                            {booking.preOrders!.map((order) => (
+                              <div key={order.id} className="rounded-lg border border-[#e6c98a] bg-white p-3">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="font-mono text-sm text-[#A0522D]">{order.code}</span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                    order.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
+                                    order.status === "CONFIRMED" ? "bg-blue-100 text-blue-800" :
+                                    order.status === "BAKING" ? "bg-orange-100 text-orange-800" :
+                                    order.status === "READY" ? "bg-green-100 text-green-800" :
+                                    order.status === "COMPLETED" ? "bg-emerald-100 text-emerald-800" :
+                                    "bg-gray-100 text-gray-800"
+                                  }`}>
+                                    {order.status}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 text-sm">
+                                  {order.items.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between text-[#5a4a3a]">
+                                      <span>
+                                        {item.qty}x {item.productName}
+                                        {item.variantName && <span className="text-[#A0522D]"> — {item.variantName}</span>}
+                                      </span>
+                                      <span className="font-medium text-[#6b4a2b]">
+                                        {formatRupiah(item.price * item.qty)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="mt-2 pt-2 border-t border-[#f2e9d5] flex justify-between text-sm">
+                                  <span className="text-[#5a4a3a]">Total</span>
+                                  <span className="font-bold text-[#A0522D]">{formatRupiah(order.total)}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
             </tbody>
           </table>
         </div>
