@@ -19,6 +19,112 @@ describe('Booking Validations', () => {
       expect(result.success).toBe(true);
     });
 
+    it('accepts valid booking data with menu items', () => {
+      const validData = {
+        date: '2025-12-25',
+        slotId: 1,
+        partySize: 4,
+        name: 'John Doe',
+        phone: '081234567890',
+        email: 'john@example.com',
+        menuItems: [
+          {
+            productId: 1,
+            variantId: 2,
+            qty: 2,
+            notes: 'Extra sweet',
+            selectedAddOns: ['1', '2'],
+          },
+        ],
+      };
+      const result = createBookingSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts empty menu items array', () => {
+      const validData = {
+        date: '2025-12-25',
+        slotId: 1,
+        partySize: 4,
+        name: 'John Doe',
+        phone: '081234567890',
+        email: 'john@example.com',
+        menuItems: [],
+      };
+      const result = createBookingSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects menu item with missing productId', () => {
+      const invalidData = {
+        date: '2025-12-25',
+        slotId: 1,
+        partySize: 4,
+        name: 'John Doe',
+        phone: '081234567890',
+        menuItems: [
+          {
+            variantId: 2,
+            qty: 2,
+          },
+        ],
+      };
+      const result = createBookingSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects menu item with qty < 1', () => {
+      const invalidData = {
+        date: '2025-12-25',
+        slotId: 1,
+        partySize: 4,
+        name: 'John Doe',
+        phone: '081234567890',
+        menuItems: [
+          {
+            productId: 1,
+            qty: 0,
+          },
+        ],
+      };
+      const result = createBookingSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects menu item with qty > 50', () => {
+      const invalidData = {
+        date: '2025-12-25',
+        slotId: 1,
+        partySize: 4,
+        name: 'John Doe',
+        phone: '081234567890',
+        menuItems: [
+          {
+            productId: 1,
+            qty: 51,
+          },
+        ],
+      };
+      const result = createBookingSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects more than 20 menu items', () => {
+      const invalidData = {
+        date: '2025-12-25',
+        slotId: 1,
+        partySize: 4,
+        name: 'John Doe',
+        phone: '081234567890',
+        menuItems: Array.from({ length: 21 }, (_, i) => ({
+          productId: i + 1,
+          qty: 1,
+        })),
+      };
+      const result = createBookingSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
     it('rejects invalid date format', () => {
       const result = createBookingSchema.safeParse({
         date: '25-12-2025',

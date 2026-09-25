@@ -88,6 +88,7 @@ export function createTestAdapter(overrides: Partial<{
             total: data.total,
             createdAt: data.createdAt,
             completedAt: null,
+            bookingId: (data as any).bookingId ?? null,
             items: data.itemsOrder.create.map((item, idx) => {
               const product = products.get(item.productId);
               const variant = product?.variants.find((v: { id: number; name: string; priceDiff: number }) => v.id === item.variantId);

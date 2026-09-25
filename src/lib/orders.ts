@@ -73,6 +73,7 @@ export interface OrderWithItems {
   total: number;
   createdAt: Date;
   completedAt: Date | null;
+  bookingId: number | null;
   items: Array<{
     id: number;
     productId: number;
@@ -155,6 +156,7 @@ export async function getOrder(code: string, phone: string): Promise<OrderWithIt
     total: order.total,
     createdAt: order.createdAt,
     completedAt: order.completedAt,
+    bookingId: order.bookingId,
     items,
   };
 }
@@ -589,6 +591,7 @@ function mapOrderWithItems(order: {
   total: number;
   createdAt: Date;
   completedAt: Date | null;
+  bookingId: number | null;
   itemsOrder: Array<{
     id: number;
     productId: number;
@@ -626,6 +629,7 @@ function mapOrderWithItems(order: {
     total: order.total,
     createdAt: order.createdAt,
     completedAt: order.completedAt,
+    bookingId: order.bookingId,
     items: order.itemsOrder.map((item: {
       id: number;
       productId: number;

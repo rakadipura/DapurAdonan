@@ -438,6 +438,7 @@ export function BookingFlow({
                   disabled={effPartySize <= 0}
                   onClick={() => setPartySize(Math.max(0, effPartySize - 1))}
                   className="h-8 w-8 rounded-full border border-[#e6c98a] bg-white flex items-center justify-center text-sm font-medium text-[#6b4a2b] hover:bg-[#fff6e6] disabled:opacity-40"
+                  aria-label="Kurangi"
                 >
                   <MinusIcon className="h-4 w-4" />
                 </button>
@@ -449,6 +450,7 @@ export function BookingFlow({
                   disabled={effPartySize >= maxSeats}
                   onClick={() => setPartySize(Math.min(maxSeats, effPartySize + 1))}
                   className="h-8 w-8 rounded-full border border-[#e6c98a] bg-white flex items-center justify-center text-sm font-medium text-[#6b4a2b] hover:bg-[#fff6e6] disabled:opacity-40"
+                  aria-label="Tambah"
                 >
                   <PlusIcon className="h-4 w-4" />
                 </button>

@@ -36,15 +36,15 @@ test.describe('Booking Flow - E2E', () => {
     // Should show slot selection step
     await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
     
-    // Set party size to see seat availability
-    await page.click('button:has-text("+")');
+    // Set party size to see seat availability (PlusIcon button)
+    await page.click('button[aria-label="Tambah"]');
     
     // Should show slot options with seat availability
     await expect(page.locator('text=Waktu')).toBeVisible();
     await expect(page.locator('text=kursi tersedia').first()).toBeVisible({ timeout: 5000 });
   });
 
-  test('can select slot and proceed to contact form', async ({ page }) => {
+  test('can select slot and proceed to menu step (new step)', async ({ page }) => {
     await page.waitForSelector('.grid button');
     const firstDateButton = page.locator('.grid button:not([disabled])').first();
     await firstDateButton.click();
@@ -53,18 +53,42 @@ test.describe('Booking Flow - E2E', () => {
     await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
 
     // Set party size to enable slot selection
-    await page.click('button:has-text("+")');
-    
-    // Wait for slots to load
-    // Set party size to enable slot selection
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
     
     // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     
-    // Click first available slot (the label's parent is the slot button)
+    // Click first available slot
     const availableSlot = page.locator('text=kursi tersedia').first().locator('..');
     await availableSlot.click();
+    
+    // Should show menu step (new step)
+    await expect(page.locator('text=Pilih Menu (Opsional)')).toBeVisible();
+  });
+
+  test('can skip menu step and proceed to contact form', async ({ page }) => {
+    await page.waitForSelector('.grid button');
+    const firstDateButton = page.locator('.grid button:not([disabled])').first();
+    await firstDateButton.click();
+    
+    // Wait for details step
+    await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
+
+    // Set party size to enable slot selection
+    await page.click('button[aria-label="Tambah"]');
+    
+    // Wait for slots to load
+    await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
+    
+    // Click first available slot
+    const availableSlot = page.locator('text=kursi tersedia').first().locator('..');
+    await availableSlot.click();
+    
+    // Should show menu step
+    await expect(page.locator('text=Pilih Menu (Opsional)')).toBeVisible();
+    
+    // Click "Lewati" to skip menu
+    await page.click('button:has-text("Lewati")');
     
     // Should show contact form step
     await expect(page.locator('text=Masukkan Info Kontak & Konfirmasi')).toBeVisible();
@@ -74,12 +98,18 @@ test.describe('Booking Flow - E2E', () => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
     // Set party size to enable slot selection
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
     
     // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
-
+    
+    // Wait for menu step
+    await expect(page.locator('text=Pilih Menu (Opsional)')).toBeVisible();
+    
+    // Skip menu
+    await page.click('button:has-text("Lewati")');
+    
     // Wait for confirm step
     await expect(page.locator('text=Masukkan Info Kontak & Konfirmasi')).toBeVisible();
     
@@ -98,12 +128,18 @@ test.describe('Booking Flow - E2E', () => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
     // Set party size to enable slot selection
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
     
     // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 
+    // Wait for menu step
+    await expect(page.locator('text=Pilih Menu (Opsional)')).toBeVisible();
+    
+    // Skip menu
+    await page.click('button:has-text("Lewati")');
+    
     // Wait for confirm step
     await expect(page.locator('text=Masukkan Info Kontak & Konfirmasi')).toBeVisible();
 
@@ -124,12 +160,18 @@ test.describe('Booking Flow - E2E', () => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
     // Set party size to enable slot selection
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
     
     // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 
+    // Wait for menu step
+    await expect(page.locator('text=Pilih Menu (Opsional)')).toBeVisible();
+    
+    // Skip menu
+    await page.click('button:has-text("Lewati")');
+    
     // Wait for confirm step
     await expect(page.locator('text=Masukkan Info Kontak & Konfirmasi')).toBeVisible();
 
@@ -148,16 +190,16 @@ test.describe('Booking Flow - E2E', () => {
     await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
 
     // Check default party size (starts at 0)
-    // The party size span is in the flex div with +/- buttons, not the date span
-    const partySizeDisplay = page.locator('button:has-text("+")').locator('..').locator('span').first();
+    // The party size span is in the flex div with +/- buttons
+    const partySizeDisplay = page.locator('button[aria-label="Tambah"]').locator('..').locator('span').first();
     await expect(partySizeDisplay).toContainText('0');
     
     // Increase party size
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
     await expect(partySizeDisplay).toContainText('1');
     
     // Decrease party size
-    await page.click('button:has-text("−")');
+    await page.click('button[aria-label="Kurangi"]');
     await expect(partySizeDisplay).toContainText('0');
   });
 
@@ -169,7 +211,7 @@ test.describe('Booking Flow - E2E', () => {
     await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
 
     // Set party size to see seat availability
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
 
     const seats = page.locator('text=kursi tersedia').first();
     const initialText = (await seats.textContent()) ?? '';
@@ -177,7 +219,7 @@ test.describe('Booking Flow - E2E', () => {
     expect(initialSeats).toBeGreaterThan(0);
 
     // Increase party size - kursi tersedia should stay the same (fixed)
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
     await expect(seats).toHaveText(new RegExp(`^${initialSeats} kursi tersedia$`));
   });
 
@@ -189,7 +231,7 @@ test.describe('Booking Flow - E2E', () => {
     await expect(page.locator('text=Pilih Jam & Jumlah Orang')).toBeVisible();
 
     // The cap is the date's biggest free slot (max remaining seats across all slots)
-    const plusButton = page.locator('button:has-text("+")');
+    const plusButton = page.locator('button[aria-label="Tambah"]');
     for (let i = 0; i < 20 && !(await plusButton.isDisabled()); i++) {
       await plusButton.click();
     }
@@ -198,7 +240,7 @@ test.describe('Booking Flow - E2E', () => {
     await expect(plusButton).toBeDisabled();
 
     // And the counter reflects the cap, never more than the seats available
-    const counter = page.locator('button:has-text("+")').locator('..').locator('span').first();
+    const counter = page.locator('button[aria-label="Tambah"]').locator('..').locator('span').first();
     await expect(counter).toHaveText(/^\d+$/);
     const value = parseInt((await counter.textContent()) ?? '0', 10);
     expect(value).toBeGreaterThanOrEqual(1);
@@ -210,12 +252,18 @@ test.describe('Booking Flow - E2E', () => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
     // Set party size to enable slot selection
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
     
     // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 
+    // Wait for menu step
+    await expect(page.locator('text=Pilih Menu (Opsional)')).toBeVisible();
+    
+    // Skip menu
+    await page.click('button:has-text("Lewati")');
+    
     // Wait for confirm step
     await expect(page.locator('text=Masukkan Info Kontak & Konfirmasi')).toBeVisible();
 
@@ -228,12 +276,18 @@ test.describe('Booking Flow - E2E', () => {
     await page.waitForSelector('.grid button');
     await page.locator('.grid button:not([disabled])').first().click();
     // Set party size to enable slot selection
-    await page.click('button:has-text("+")');
+    await page.click('button[aria-label="Tambah"]');
     
     // Wait for slots to load
     await page.waitForSelector('text=kursi tersedia', { timeout: 5000 });
     await page.locator('text=kursi tersedia').first().locator('..').click();
 
+    // Wait for menu step
+    await expect(page.locator('text=Pilih Menu (Opsional)')).toBeVisible();
+    
+    // Skip menu
+    await page.click('button:has-text("Lewati")');
+    
     // Wait for confirm step
     await expect(page.locator('text=Masukkan Info Kontak & Konfirmasi')).toBeVisible();
 
@@ -346,7 +400,7 @@ test.describe('Booking API', () => {
 
     expect(response.status()).toBe(400);
     const data = await response.json();
-    expect(data.error).toContain('melebihi kapasitas jadwal');
+    expect(data.error).toContain('kapasitas');
   });
 
   test('GET /api/bookings/slots returns available slots', async ({ request }) => {

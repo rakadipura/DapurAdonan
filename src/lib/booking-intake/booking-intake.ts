@@ -19,6 +19,7 @@ export class BookingIntake {
 
   async accept(input: CreateBookingWithMenuInput): Promise<BookingWithMenuResult> {
     this.#validateContact(input);
+    this.#validateBookingDate(input.date);
     const { menuItems, ...bookingData } = input;
 
     const validatedMenuItems = menuItems && menuItems.length > 0
@@ -132,6 +133,13 @@ export class BookingIntake {
       if (!emailResult.valid) {
         throw new BookingIntakeError("INVALID_EMAIL", emailResult.error ?? "Invalid email", { email: input.email });
       }
+    }
+  }
+
+  #validateBookingDate(date: string): void {
+    const today = this.#wibToday();
+    if (date < today) {
+      throw new BookingIntakeError("INVALID_DATE", `Tanggal booking (${date}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${today}`, { date, today });
     }
   }
 
