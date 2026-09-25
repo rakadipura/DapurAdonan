@@ -253,7 +253,7 @@ export class BookingIntake {
       },
       select: { partySize: true },
     });
-    const occupied = existing.reduce((sum, b) => sum + b.partySize, 0);
+    const occupied = existing.reduce((sum, b) => sum + (b as { partySize: number }).partySize, 0);
     const available = slot.capacity - occupied;
     if (available < requiredSize) {
       throw new BookingIntakeError("SLOT_FULL", `Jadwal penuh untuk slot ${slot.name} (${slot.startTime}-${slot.endTime}) pada tanggal ${date}; hanya tersisa ${available} orang dari kapasitas ${slot.capacity}, butuh ${requiredSize}`);

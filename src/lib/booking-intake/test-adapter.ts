@@ -105,16 +105,17 @@ export function createTestAdapter(overrides: {
   let bookingIdSeq = overrides.nextBookingId ?? 1;
   let orderIdSeq = overrides.nextOrderId ?? 1;
   let orderItemIdSeq = overrides.nextOrderItemId ?? 1;
-  let idCounter = 0;
 
   const fixedClock = overrides.fixedClock ?? new Date("2025-01-15T00:00:00+07:00");
 
   return {
     prisma: {
       bookingSlot: {
-        findUnique: async ({ where: { id } }) => slots.get(id) ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        findUnique: async ({ where: { id } }: any) => slots.get(id) ?? null,
       },
-booking: {
+      booking: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         create: async ({ data, include }: any) => {
           const booking: InMemoryBooking = {
             id: bookingIdSeq++,
@@ -157,28 +158,27 @@ booking: {
             slot: include?.slot?.select
               ? { id: slot.id, name: slot.name, startTime: slot.startTime, endTime: slot.endTime }
               : undefined,
-          } as any;
+          };
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         findMany: async ({ where, select }: any) => {
           let result = [...bookings];
 
-          if (where.date) {
+          if (where?.date) {
             const targetDate = where.date as Date;
-            result = result.filter((b) =>
-              b.date.getTime() === targetDate.getTime()
-            );
+            result = result.filter((b) => b.date.getTime() === targetDate.getTime());
           }
-          if (where.slotId) {
-            result = result.filter((b) => b.slotId === where.slotId);
+          if (where?.slotId) {
+            result = result.filter((b) => b.slotId === (where.slotId as number));
           }
-          if (where.status?.notIn) {
+          if (where?.status?.notIn) {
             const excluded = where.status.notIn as string[];
             result = result.filter((b) => !excluded.includes(b.status));
           }
 
           return result.map((b) => {
             const slot = slots.get(b.slotId);
-            const out: any = {};
+            const out: Record<string, unknown> = {};
             if (select?.slotId) out.slotId = b.slotId;
             if (select?.partySize) out.partySize = b.partySize;
             if (select?.status) out.status = b.status;
@@ -191,15 +191,17 @@ booking: {
         },
       },
       product: {
-        findMany: async ({ where, select }: any) => {
-          if (!where.id?.in) return [];
-          return (where.id.in as number[])
-            .map((id) => products.get(id))
-            .filter((p): p is InMemoryProduct => p !== undefined);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        findMany: async ({ where }: any) => {
+          if (!where?.id?.in) return [];
+          return where.id.in
+            .map((id: number) => products.get(id))
+            .filter((p: InMemoryProduct | undefined): p is InMemoryProduct => p !== undefined);
         },
       },
       order: {
-        create: async ({ data, include }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        create: async ({ data }: any) => {
           const order: InMemoryOrder = {
             id: orderIdSeq++,
             code: data.code as string,
@@ -229,22 +231,22 @@ booking: {
           };
           orders.push(order);
 
-          const itemsData = (data as any).itemsOrder?.create ?? [];
-          const items = itemsData.map((itemData: any) => {
-            const product = products.get(itemData.productId)!;
+          const itemsData = (data.itemsOrder as { create: Array<Record<string, unknown>> })?.create ?? [];
+          const items = itemsData.map((itemData) => {
+            const product = products.get(itemData.productId as number)!;
             const variant = itemData.variantId
-              ? product.variants.find((v) => v.id === itemData.variantId) ?? null
+              ? product.variants.find((v) => v.id === (itemData.variantId as number)) ?? null
               : null;
             const orderItem: InMemoryOrderItem = {
               id: orderItemIdSeq++,
               orderId: order.id,
-              productId: itemData.productId,
-              variantId: itemData.variantId ?? null,
-              qty: itemData.qty,
-              notes: itemData.notes ?? null,
-              selectedAddOns: itemData.selectedAddOns ?? [],
-              addOnsPrice: itemData.addOnsPrice ?? 0,
-              price: itemData.price,
+              productId: itemData.productId as number,
+              variantId: itemData.variantId as number | null,
+              qty: itemData.qty as number,
+              notes: itemData.notes as string | null,
+              selectedAddOns: itemData.selectedAddOns as string[],
+              addOnsPrice: itemData.addOnsPrice as number,
+              price: itemData.price as number,
               createdAt: new Date(),
             };
             orderItems.push(orderItem);
@@ -289,11 +291,12 @@ booking: {
             completedAt: order.completedAt,
             bookingId: order.bookingId,
             itemsOrder: items,
-          } as any;
+          };
         },
       },
       orderItem: {
-        groupBy: async ({ where, _sum }: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        groupBy: async ({ where }: any) => {
           if (!where.productId || !where.order) return [{ _sum: { qty: null } }];
           const filtered = orderItems.filter(
             (oi) =>
@@ -302,9 +305,9 @@ booking: {
               orders.some(
                 (o) =>
                   o.id === oi.orderId &&
-                  (where.order.status?.in as string[]).includes(o.status) &&
-                  o.createdAt >= (where.order.createdAt.gte as Date) &&
-                  o.createdAt < (where.order.createdAt.lt as Date)
+                  (where.order?.status?.in ?? []).includes(o.status) &&
+                  o.createdAt >= (where.order?.createdAt?.gte ?? new Date(0)) &&
+                  o.createdAt < (where.order?.createdAt?.lt ?? new Date())
               )
           );
           const sum = filtered.reduce((acc, oi) => acc + oi.qty, 0);
@@ -333,11 +336,13 @@ booking: {
       return code;
     },
     clock: () => fixedClock,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     $transaction: async <T>(fn: (tx: any) => Promise<T>) => {
       return fn({
         $queryRaw: async () => {},
         orderItem: {
-          groupBy: async ({ where, _sum }: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          groupBy: async ({ where }: any) => {
             if (!where.productId || !where.order) return [{ _sum: { qty: null } }];
             const filtered = orderItems.filter(
               (oi) =>
@@ -346,9 +351,9 @@ booking: {
                 orders.some(
                   (o) =>
                     o.id === oi.orderId &&
-                    (where.order.status?.in as string[]).includes(o.status) &&
-                    o.createdAt >= (where.order.createdAt.gte as Date) &&
-                    o.createdAt < (where.order.createdAt.lt as Date)
+                    (where.order?.status?.in ?? []).includes(o.status) &&
+                    o.createdAt >= (where.order?.createdAt?.gte ?? new Date(0)) &&
+                    o.createdAt < (where.order?.createdAt?.lt ?? new Date())
                 )
             );
             const sum = filtered.reduce((acc, oi) => acc + oi.qty, 0);
@@ -356,6 +361,7 @@ booking: {
           },
         },
         booking: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           create: async ({ data, include }: any) => {
             const booking: InMemoryBooking = {
               id: bookingIdSeq++,
@@ -398,11 +404,12 @@ booking: {
               slot: include?.slot?.select
                 ? { id: slot.id, name: slot.name, startTime: slot.startTime, endTime: slot.endTime }
                 : undefined,
-            } as any;
+            };
           },
         },
         order: {
-          create: async ({ data, include }: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          create: async ({ data }: any) => {
             const order: InMemoryOrder = {
               id: orderIdSeq++,
               code: data.code as string,
@@ -432,22 +439,22 @@ booking: {
             };
             orders.push(order);
 
-const itemsData = (data as any).itemsOrder?.create ?? [];
-const items = itemsData.map((itemData: any) => {
-              const product = products.get(itemData.productId)!;
+            const itemsData = (data.itemsOrder as { create: Array<Record<string, unknown>> })?.create ?? [];
+            const items = itemsData.map((itemData) => {
+              const product = products.get(itemData.productId as number)!;
               const variant = itemData.variantId
-                ? product.variants.find((v) => v.id === itemData.variantId) ?? null
+                ? product.variants.find((v) => v.id === (itemData.variantId as number)) ?? null
                 : null;
               const orderItem: InMemoryOrderItem = {
                 id: orderItemIdSeq++,
                 orderId: order.id,
-                productId: itemData.productId,
-                variantId: itemData.variantId ?? null,
-                qty: itemData.qty,
-                notes: itemData.notes ?? null,
-                selectedAddOns: itemData.selectedAddOns ?? [],
-                addOnsPrice: itemData.addOnsPrice ?? 0,
-                price: itemData.price,
+                productId: itemData.productId as number,
+                variantId: itemData.variantId as number | null,
+                qty: itemData.qty as number,
+                notes: itemData.notes as string | null,
+                selectedAddOns: itemData.selectedAddOns as string[],
+                addOnsPrice: itemData.addOnsPrice as number,
+                price: itemData.price as number,
                 createdAt: new Date(),
               };
               orderItems.push(orderItem);
@@ -492,7 +499,7 @@ const items = itemsData.map((itemData: any) => {
               completedAt: order.completedAt,
               bookingId: order.bookingId,
               itemsOrder: items,
-            } as any;
+            };
           },
         },
       });

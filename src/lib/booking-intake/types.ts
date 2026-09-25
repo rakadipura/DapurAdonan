@@ -46,7 +46,7 @@ export interface PrismaLike {
   };
   booking: {
     create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<any>;
-    findMany: (args: { where: Record<string, unknown>; select: Record<string, unknown> }) => Promise<Array<{ partySize: number }>>;
+    findMany: (args: { where: Record<string, unknown>; select: Record<string, unknown> }) => Promise<Record<string, unknown>[]>;
   };
   product: {
     findMany: (args: { where: { id: { in: number[] } }; select: Record<string, unknown> }) => Promise<unknown[]>;

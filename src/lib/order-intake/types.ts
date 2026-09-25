@@ -78,6 +78,7 @@ export interface OrderCreateData {
   paymentProofUrl: string | null;
   total: number;
   createdAt: Date;
+  bookingId: number | null;
   itemsOrder: {
     create: OrderItemCreateData[];
   };

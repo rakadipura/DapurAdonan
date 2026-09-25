@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { BookingIntakeAdapter } from "./types";
 import { getBookingLeadHours } from "@/lib/settings";
 import { normalizePhone, isValidPhone, isValidEmail } from "@/lib/regex";
@@ -26,22 +26,29 @@ function getIdGenerator(): () => string {
 export const productionAdapter: BookingIntakeAdapter = {
   prisma: {
     bookingSlot: {
-      findUnique: (args) => getPrisma().bookingSlot.findUnique(args),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      findUnique: (args: any) => getPrisma().bookingSlot.findUnique(args),
     },
     booking: {
-      create: (args) => getPrisma().booking.create(args as any),
-      findMany: (args) => getPrisma().booking.findMany(args as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      create: (args: any) => getPrisma().booking.create(args),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      findMany: (args: any) => getPrisma().booking.findMany(args),
     },
     product: {
-      findMany: (args) => getPrisma().product.findMany(args as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      findMany: (args: any) => getPrisma().product.findMany(args),
     },
     order: {
-      create: (args) => getPrisma().order.create(args as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      create: (args: any) => getPrisma().order.create(args),
     },
     orderItem: {
-      groupBy: (args) => getPrisma().orderItem.groupBy(args as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      groupBy: (args: any) => getPrisma().orderItem.groupBy(args),
     },
-    $queryRaw: (query, ...args) => getPrisma().$queryRaw(query, ...args),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    $queryRaw: (query: any, ...args: any[]) => getPrisma().$queryRaw(query, ...args),
   },
   settings: {
     getBookingLeadHours: () => getBookingLeadHours(),
@@ -56,5 +63,6 @@ export const productionAdapter: BookingIntakeAdapter = {
   },
   idGenerator: getIdGenerator(),
   clock: () => new Date(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   $transaction: <T>(fn: (tx: any) => Promise<T>) => getPrisma().$transaction(fn),
 };

@@ -55,6 +55,7 @@ export class OrderIntake {
         paymentProofUrl: orderData.paymentProofUrl ?? null,
         total,
         createdAt: now,
+        bookingId: null,
         itemsOrder: {
           create: validatedItems.map((item) => ({
             productId: item.product.id,
