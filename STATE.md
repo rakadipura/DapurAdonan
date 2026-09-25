@@ -2,7 +2,7 @@
 
 **Last updated:** 2025-01-24  
 **Branch:** main  
-**Commit:** 8e83c77 (refactor: kontak page keeps only WhatsApp card)
+**Commit:** f7299b3 (docs: add project state, skills framework, domain docs, and ADRs) + Order Intake Pipeline collapse
 
 ---
 
@@ -69,26 +69,32 @@ docs/adr/
 
 ---
 
-## Architecture Review (Just Completed)
+## Architecture Review (Completed)
 
 Ran `/improve-codebase-architecture` → generated HTML report at `/tmp/architecture-review-*/architecture-review.html`
 
 ### 6 Candidates Identified
 
-| # | Candidate | Strength | Category |
-|---|-----------|----------|----------|
-| 1 | **Collapse Order Intake Pipeline** | **Strong** | ports & adapters |
-| 2 | **Collapse Booking Intake Pipeline** | **Strong** | ports & adapters |
-| 3 | **Deepen Admin Order/Booking Panels** | Worth exploring | local-substitutable |
-| 4 | **Consolidate Settings Access** | Worth exploring | local-substitutable |
-| 5 | **Extract WIB Date Helpers → Time Module** | Worth exploring | local-substitutable |
-| 6 | **Unify Phone/Email Validation → Contact Module** | Speculative | local-substitutable |
+| # | Candidate | Strength | Category | Status |
+|---|-----------|----------|----------|--------|
+| 1 | **Collapse Order Intake Pipeline** | **Strong** | ports & adapters | ✅ **Done** |
+| 2 | **Collapse Booking Intake Pipeline** | **Strong** | ports & adapters | Next |
+| 3 | **Deepen Admin Order/Booking Panels** | Worth exploring | local-substitutable | — |
+| 4 | **Consolidate Settings Access** | Worth exploring | local-substitutable | — |
+| 5 | **Extract WIB Date Helpers → Time Module** | Worth exploring | local-substitutable | — |
+| 6 | **Unify Phone/Email Validation → Contact Module** | Speculative | local-substitutable | — |
 
-### Top Recommendation: **Order Intake Pipeline**
-- Largest flow (675 lines in `orders.ts`)
-- Touches most domain concepts
-- 5 modules → 1 interface (`OrderIntake.accept(input) → Order`)
-- Highest leverage for testability and bug localization
+### Candidate 1 — Order Intake Pipeline: **Completed**
+- Created `src/lib/order-intake/` module with `OrderIntake` class
+- Single interface: `accept(input) → OrderWithItems`
+- All deps injected via adapter (Prisma, Settings, Contact, ID generator, clock)
+- Private methods: `#validateItems`, `#calculatePricing`, `#calculateDeliveryFee`, `#lockProducts`, `#recheckStockUnderLock`
+- Pricing + custom cake fee override inside module
+- Both stock checks (pre-check + locked re-check)
+- Typed errors (`OrderIntakeError` with codes)
+- In-memory test adapter with deterministic IDs & fixed clock
+- HTTP handler (`/api/orders/route.ts`) now thin adapter (~60 lines)
+- All checks pass: `type-check ✓`, `lint ✓`, `test ✓`
 
 ---
 
@@ -113,23 +119,26 @@ Ran `/improve-codebase-architecture` → generated HTML report at `/tmp/architec
 
 ## Next Recommended Steps
 
-### 1. Deepen Order Intake (Highest Leverage)
-```
-/grilling "Collapse Order Intake Pipeline"
-```
-Walk the decision tree: interface shape, what sits behind the seam, test strategy, migration plan.
+### 1. ~~Deepen Order Intake~~ ✅ **Done**
+Created `src/lib/order-intake/` module. HTTP handler now delegates to `orderIntake.accept()`.
 
-### 2. Run E2E Tests
+### 2. Deepen Booking Intake (Next Highest Leverage)
+```
+/grilling "Collapse Booking Intake Pipeline"
+```
+Same pattern as Order Intake: `BookingIntake` class with `accept()`, `reschedule()`, `cancel()`, in-memory test adapter.
+
+### 3. Run E2E Tests
 ```bash
 npm run dev          # terminal 1
 npm run test:e2e     # terminal 2
 ```
 Fix failures, then uncomment `e2e-tests` job in `.github/workflows/ci.yml`
 
-### 3. Migrate Legacy Dates
+### 4. Migrate Legacy Dates
 Write a one-time migration script for booking/order rows stored with off-by-one error.
 
-### 4. Extract Time Module (Candidate 5)
+### 5. Extract Time Module (Candidate 5)
 Low-risk, high-value: separates WIB date logic from settings, makes ADR-0001 explicit, improves testability.
 
 ---
@@ -139,7 +148,8 @@ Low-risk, high-value: separates WIB date logic from settings, makes ADR-0001 exp
 | Area | Files |
 |------|-------|
 | Domain model | `prisma/schema.prisma` |
-| Order logic | `src/lib/orders.ts` (675 lines) |
+| **Order Intake module** | `src/lib/order-intake/` (types, order-intake, production-adapter, test-adapter) |
+| Order logic (legacy) | `src/lib/orders.ts` (675 lines) |
 | Booking logic | `src/lib/bookings.ts` (490 lines) |
 | Settings/Time | `src/lib/settings.ts` (226 lines) |
 | Validation | `src/validations/orders.ts`, `bookings.ts` |
