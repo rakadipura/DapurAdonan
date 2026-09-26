@@ -49,6 +49,10 @@ interface MenuItem {
   selectedAddOns?: string[];
 }
 
+interface ClosedDaysConfig {
+  closedDays: number[]; // 0=Sunday, 1=Monday, ..., 6=Saturday
+}
+
 interface BookingFlowProps {
   categories: Array<{ id: number; name: string; slug: string }>;
   products: Product[];
@@ -57,6 +61,7 @@ interface BookingFlowProps {
   leadHours: number;
   defaultDate: string;
   bookingMenuCategories?: BookingMenuCategoryConfig[];
+  closedDaysConfig?: ClosedDaysConfig;
 }
 
 type Step = "date" | "details" | "menu" | "confirm";
@@ -69,6 +74,7 @@ export function BookingFlow({
   categories,
   products,
   bookingMenuCategories,
+  closedDaysConfig,
 }: BookingFlowProps) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("date");
@@ -183,7 +189,18 @@ export function BookingFlow({
     const nowWIB = new Date(now.getTime() + wibOffset);
     const dateStart = fromWIBString(date);
     const diffHours = (dateStart.getTime() - nowWIB.getTime()) / (1000 * 60 * 60);
-    return diffHours < leadHours;
+    
+    // Check lead hours
+    if (diffHours < leadHours) return true;
+    
+    // Check closed days
+    if (closedDaysConfig?.closedDays) {
+      const closedDays = new Set(closedDaysConfig.closedDays);
+      const dateObj = new Date(date + "T00:00:00");
+      if (closedDays.has(dateObj.getDay())) return true;
+    }
+    
+    return false;
   };
 
   const updateMenuItem = (productId: number, variantId: number | undefined, updates: Partial<MenuItem>) => {

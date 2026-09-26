@@ -71,6 +71,13 @@ const SETTING_DEFINITIONS: SettingDefinition[] = [
     type: "json",
     placeholder: '[{"zone":"Pusat","baseFee":10000,"perKm":2000,"maxKm":10,"freeMin":100000}]',
   },
+  {
+    key: "closedDays",
+    label: "Hari Tutup (JSON)",
+    description: 'Array hari tutup (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: [0,6] untuk Minggu dan Sabtu',
+    type: "json",
+    placeholder: '[0,6]',
+  },
 ];
 
 function getDefinition(key: string): SettingDefinition | undefined {

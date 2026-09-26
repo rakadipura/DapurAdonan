@@ -6,6 +6,7 @@ import {
   parseYMD,
   wibToday,
   wibTomorrow,
+  getClosedDaysConfig,
 } from "./settings";
 
 import { normalizePhone } from "./regex";
@@ -155,6 +156,17 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingW
   if (input.date < todayStr) {
     throw new Error(
       `Tanggal booking (${input.date}) tidak valid: harus hari ini atau setelahnya. Hari ini: ${todayStr}`
+    );
+  }
+
+  // Validate closed days
+  const closedDaysConfig = await getClosedDaysConfig();
+  const closedDays = new Set(closedDaysConfig.closedDays);
+  const inputDate = parseYMD(input.date);
+  if (closedDays.has(inputDate.getDay())) {
+    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    throw new Error(
+      `Tanggal booking (${input.date}) tidak valid: ${dayNames[inputDate.getDay()]} adalah hari tutup`
     );
   }
 

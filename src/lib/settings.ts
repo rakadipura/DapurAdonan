@@ -21,6 +21,10 @@ export interface BookingMenuCategoryConfig {
   sortOrder: number;
 }
 
+export interface ClosedDaysConfig {
+  closedDays: number[]; // 0=Sunday, 1=Monday, ..., 6=Saturday
+}
+
 async function getRaw(key: string): Promise<string | null> {
   const row = await prisma.setting.findUnique({ where: { key } });
   return row?.value ?? null;
@@ -62,30 +66,39 @@ export async function getBookingLeadHours(): Promise<number> {
   return Number.isFinite(n) && n >= 0 ? n : 1;
 }
 
+export async function getClosedDaysConfig(): Promise<ClosedDaysConfig> {
+  const raw = await getRaw("closedDays");
+  if (!raw) return { closedDays: [0, 6] }; // Default: Sunday and Saturday closed
+  try {
+    const parsed = JSON.parse(raw) as ClosedDaysConfig;
+    // Validate: must be array of numbers 0-6
+    if (Array.isArray(parsed.closedDays) && parsed.closedDays.every(d => Number.isInteger(d) && d >= 0 && d <= 6)) {
+      return parsed;
+    }
+    return { closedDays: [0, 6] };
+  } catch {
+    return { closedDays: [0, 6] };
+  }
+}
+
 export async function getPickupDateOptions(
   count: number = 14,
 ): Promise<{ date: string; label: string }[]> {
+  const closedDaysConfig = await getClosedDaysConfig();
+  const closedDays = new Set(closedDaysConfig.closedDays);
+
   const now = new Date();
   const options: { date: string; label: string }[] = [];
   for (let i = 1; i <= count; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() + i);
-    if (isTargetClosed(d)) continue;
+    if (closedDays.has(d.getDay())) continue;
     options.push({
       date: formatDateYMD(d),
       label: formatDateLong(d),
     });
   }
   return options;
-}
-
-// A tiny hardoced closed-day rule (can later come from settings). We treat
-// the shop as closed on Sunday by default. This matches a common Toko Mini Moni style.
-function isTargetClosed(d: Date): boolean {
-  // 0 = Sunday
-  const day = d.getDay();
-  if (day === 0) return true;
-  return false;
 }
 
 export function formatDateYMD(d: Date): string {
@@ -228,8 +241,9 @@ export async function getCustomerFacingSettings(): Promise<{
   faviconUrl: string;
   heroImageUrl: string;
   bookingMenuCategories: BookingMenuCategoryConfig[];
+  closedDaysConfig: ClosedDaysConfig;
 }> {
-  const [windows, zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl, bookingMenuCategories] = await Promise.all([
+  const [windows, zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl, bookingMenuCategories, closedDaysConfig] = await Promise.all([
     getPickupWindows(),
     getDeliveryZones(),
     getTransferInfo(),
@@ -240,6 +254,7 @@ export async function getCustomerFacingSettings(): Promise<{
     getFaviconUrl(),
     getHeroImageUrl(),
     getBookingMenuCategoryConfig(),
+    getClosedDaysConfig(),
   ]);
-  return { pickupWindows: windows, deliveryZones: zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl, bookingMenuCategories };
+  return { pickupWindows: windows, deliveryZones: zones, transferInfo, waNumber, storeName, storeTagline, logoUrl, faviconUrl, heroImageUrl, bookingMenuCategories, closedDaysConfig };
 }

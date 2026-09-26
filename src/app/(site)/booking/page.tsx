@@ -65,6 +65,7 @@ export default async function BookingPage() {
             leadHours={leadHours}
             defaultDate={defaultDate}
             bookingMenuCategories={settings.bookingMenuCategories}
+            closedDaysConfig={settings.closedDaysConfig}
           />
     </div>
   );
