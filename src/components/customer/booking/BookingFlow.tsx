@@ -350,31 +350,39 @@ export function BookingFlow({
           <div>
             <h2 className="mb-3 text-lg font-semibold text-[#6b4a2b]">Pilih Tanggal</h2>
             <div className="grid grid-cols-2 gap-2">
-              {dateOptions.map((opt) => {
-                const disabled = isDateDisabled(opt.date);
-                return (
-                  <button
-                    key={opt.date}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => handleDateChange(opt.date)}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      selectedDate === opt.date
-                        ? "border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium"
-                        : disabled
-                        ? "border-[#e6c98a] bg-gray-50 text-[#5a4a3a] opacity-60 cursor-not-allowed"
-                        : "border-[#e6c98a] bg-white text-[#5a4a3a] hover:border-[#A0522D]"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">{opt.label}</div>
-                    {disabled && (
-                      <div className="text-xs text-amber-600 mt-1">
-                        Minimal {leadHours} jam sebelum
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+              {/* Filter out closed days on client side as well */}
+              {dateOptions
+                .filter((opt) => {
+                  if (!closedDaysConfig?.closedDays) return true;
+                  const closedDays = new Set(closedDaysConfig.closedDays);
+                  const dateObj = new Date(opt.date + "T00:00:00");
+                  return !closedDays.has(dateObj.getDay());
+                })
+                .map((opt) => {
+                  const disabled = isDateDisabled(opt.date);
+                  return (
+                    <button
+                      key={opt.date}
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => handleDateChange(opt.date)}
+                      className={`rounded-xl border p-3 text-left transition ${
+                        selectedDate === opt.date
+                          ? "border-[#A0522D] bg-[#fffaf0] text-[#6b4a2b] font-medium"
+                          : disabled
+                          ? "border-[#e6c98a] bg-gray-50 text-[#5a4a3a] opacity-60 cursor-not-allowed"
+                          : "border-[#e6c98a] bg-white text-[#5a4a3a] hover:border-[#A0522D]"
+                      }`}
+                    >
+                      <div className="text-sm font-medium">{opt.label}</div>
+                      {disabled && (
+                        <div className="text-xs text-amber-600 mt-1">
+                          Minimal {leadHours} jam sebelum
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
             </div>
             {dateOptions.length === 0 && (
               <p className="mt-2 text-sm text-[#5a4a3a]">Belum ada tanggal tersedia.</p>
