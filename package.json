@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "build": "npm run version:gen && prisma generate && prisma migrate deploy && next build",
+    "build": "npm run version:gen && prisma generate && prisma db push && next build",
     "start": "next start",
     "lint": "eslint . --ext .js,.ts,.tsx",
     "type-check": "tsc --noEmit",
