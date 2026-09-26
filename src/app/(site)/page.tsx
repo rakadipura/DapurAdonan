@@ -60,7 +60,6 @@ export default async function HomePage() {
 
   return (
     <>
-
         {/* Hero */}
         <section className="relative bg-[#FDF6E3] overflow-hidden">
           <div className="mx-auto max-w-6xl px-4 pb-10 pt-12 sm:px-6 sm:pt-20">
