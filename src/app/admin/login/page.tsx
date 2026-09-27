@@ -50,7 +50,7 @@ function LoginForm() {
               autoFocus
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:outline-none focus:ring-1 focus:ring-[#A0522D]"
+              className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
             />
           </div>
 

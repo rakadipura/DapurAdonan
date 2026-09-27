@@ -46,6 +46,21 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Brand colors */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-text-primary: var(--brand-text-primary);
+  --color-brand-text-secondary: var(--brand-text-secondary);
+  --color-brand-text-accent: var(--brand-text-accent);
+  --color-brand-bg-primary: var(--brand-bg-primary);
+  --color-brand-bg-card: var(--brand-bg-card);
+  --color-brand-bg-form: var(--brand-bg-form);
+  --color-brand-bg-highlight: var(--brand-bg-highlight);
+  --color-brand-border-primary: var(--brand-border-primary);
+  --color-brand-border-light: var(--brand-border-light);
+  --color-brand-badge-bg: var(--brand-badge-bg);
+  --color-brand-badge-border: var(--brand-badge-border);
 }
 
 :root {
@@ -81,6 +96,21 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Brand colors */
+  --brand-primary: #A0522D;
+  --brand-primary-hover: #8b4513;
+  --brand-text-primary: #6b4a2b;
+  --brand-text-secondary: #5a4a3a;
+  --brand-text-accent: #A0522D;
+  --brand-bg-primary: #FDF6E3;
+  --brand-bg-card: #FCE9C8;
+  --brand-bg-form: #fffaf0;
+  --brand-bg-highlight: #FFF6E6;
+  --brand-border-primary: #e6c98a;
+  --brand-border-light: #efe2c7;
+  --brand-badge-bg: #fff6e6;
+  --brand-badge-border: #e6c98a;
 }
 
 .dark {
@@ -115,6 +145,21 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Brand colors (dark mode) */
+  --brand-primary: #c4754a;
+  --brand-primary-hover: #d48a5e;
+  --brand-text-primary: #e8d5c4;
+  --brand-text-secondary: #c9b8a8;
+  --brand-text-accent: #c4754a;
+  --brand-bg-primary: #3d2e1f;
+  --brand-bg-card: #4a3825;
+  --brand-bg-form: #3d2e1f;
+  --brand-bg-highlight: #5a4328;
+  --brand-border-primary: #8b6d45;
+  --brand-border-light: #6b563d;
+  --brand-badge-bg: #5a4328;
+  --brand-badge-border: #8b6d45;
 }
 
 @layer base {
@@ -140,6 +185,118 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .animate-slide-up {
   animation: slide-up 0.3s ease-out forwards;
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
+/* Focus ring utilities */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-white;
+}
+
+.focus-ring-sm {
+  @apply focus:outline-none focus:ring-1 focus:ring-brand-primary;
+}
+
+.focus-ring-inset {
+  @apply focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-inset;
+}
+
+.dark .focus-ring {
+  @apply focus:ring-offset-brand-bg-form;
+}
+
+/* Sonner toast custom styling */
+.cn-toast {
+  @apply shadow-lg;
+}
+
+.cn-toast-title {
+  @apply font-medium text-brand-text-primary;
+}
+
+.cn-toast-description {
+  @apply text-brand-text-secondary text-sm;
+}
+
+.cn-toast-close {
+  @apply text-brand-text-secondary hover:text-brand-text-primary transition-colors;
+}
+
+/* Micro-interaction utilities */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes scale-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
+}
+
+@keyframes slide-up-small {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down-small {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out forwards;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.1s ease-in forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.15s ease-out forwards;
+}
+
+.animate-scale-out {
+  animation: scale-out 0.1s ease-in forwards;
+}
+
+.animate-slide-up-small {
+  animation: slide-up-small 0.2s ease-out forwards;
+}
+
+.animate-slide-down-small {
+  animation: slide-down-small 0.15s ease-in forwards;
+}
+
+/* Card hover lift */
+.hover-lift {
+  @apply transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg;
+}
+
+/* Button press */
+.active-scale {
+  @apply active:scale-[0.98] transition-transform duration-75;
 }

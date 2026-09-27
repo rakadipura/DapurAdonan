@@ -28,6 +28,14 @@
 - **GitHub Actions CI** — lint, typecheck, unit tests, build
 - **Test DB** — separate setup/cleanup scripts
 
+### Aesthetic/UX Improvements (2025-01-27)
+- **next/image migration** — ProductCard, Hero sections (home/menu), lazy loading + blur placeholders
+- **Design token system** — Brand colors extracted to CSS variables in `globals.css` (light/dark mode)
+- **Skeleton loaders** — ProductCardSkeleton, BookingSlotSkeleton, BookingDateOptionSkeleton components
+- **Focus ring consistency** — Unified `.focus-ring`, `.focus-ring-sm`, `.focus-ring-inset` utilities across all inputs/buttons/checkboxes
+- **Custom toast styling** — Sonner toasts themed with brand colors (success/error/warning/info)
+- **Micro-interactions** — Fade/scale animations for modals, hover-lift cards, active-scale buttons, slide transitions
+
 ---
 
 ## Skills Framework (Newly Installed)
@@ -108,12 +116,17 @@ Ran `/improve-codebase-architecture` → generated HTML report at `/tmp/architec
 ### Medium Priority
 - [ ] Rate-limit `/api/admin/login`
 - [ ] Replace local `uploads/` with S3/Cloudinary (for serverless)
-- [ ] Clear remaining ESLint warnings (unused imports, `<img>` → `next/image`)
+- [x] Clear remaining ESLint warnings (unused imports, `<img>` → `next/image`) — **Done**
 
 ### Optional Enhancements
 - [ ] Image upload for products
 - [ ] Email notifications (stub exists in `src/lib/email.ts`)
 - [ ] Customer dashboard (favorites, reorder, address book)
+
+### Completed Polish (2025-01-27)
+- [x] Consistent focus rings across all inputs/buttons/checkboxes (`.focus-ring`, `.focus-ring-sm`, `.focus-ring-inset`)
+- [x] Custom Sonner toast styling with brand colors
+- [x] Micro-interactions: modal fade/scale, card hover-lift, button active-scale, slide transitions
 
 ---
 

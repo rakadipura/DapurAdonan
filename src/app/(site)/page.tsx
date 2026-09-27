@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { getCustomerFacingSettings } from "@/lib/settings";
 import { OrderForm } from "@/components/customer/order/OrderForm";
@@ -64,11 +65,14 @@ export default async function HomePage() {
         <section className="relative bg-[#FDF6E3] overflow-hidden">
           <div className="mx-auto max-w-6xl px-4 pb-10 pt-12 sm:px-6 sm:pt-20">
             {settings.heroImageUrl && (
-              <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
-                <img
+              <div className="mb-8 rounded-xl overflow-hidden shadow-lg relative h-64">
+                <Image
                   src={settings.heroImageUrl}
                   alt={settings.storeName}
-                  className="w-full h-64 object-cover"
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
               </div>
             )}

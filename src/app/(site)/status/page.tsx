@@ -63,7 +63,7 @@ export default async function StatusPesananPage({
                   name="code"
                   defaultValue={code ?? ""}
                   placeholder="Contoh: MM-000001"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
               <div>
@@ -74,7 +74,7 @@ export default async function StatusPesananPage({
                   name="phone"
                   defaultValue={phone ?? ""}
                   placeholder="081234567890"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
               <button

@@ -331,7 +331,7 @@ export function SlotsPanel() {
             </div>
 
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="isActive" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]" />
+              <input type="checkbox" id="isActive" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="rounded border-brand-border-primary text-brand-primary focus-ring-inset" />
               <Label htmlFor="isActive" className="cursor-pointer">Aktif (tampil ke pelanggan)</Label>
             </div>
 

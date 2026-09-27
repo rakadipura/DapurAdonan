@@ -593,7 +593,7 @@ export function BookingFlow({
                                                     )?.selectedAddOns ?? []), String(addOn.id)],
                                               })
                                             }
-                                            className="h-4 w-4 rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]"
+                                            className="h-4 w-4 rounded border-brand-border-primary text-brand-primary focus-ring-inset"
                                           />
                                           <span>{addOn.name}</span>
                                           {addOn.price > 0 && (
@@ -674,7 +674,7 @@ export function BookingFlow({
                   value={contact.name}
                   onChange={(e) => setContactLocal({ ...contact, name: e.target.value })}
                   placeholder="Nama Anda"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
               <div>
@@ -684,7 +684,7 @@ export function BookingFlow({
                   value={contact.phone}
                   onChange={(e) => setContactLocal({ ...contact, phone: e.target.value })}
                   placeholder="081234567890"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
               <div>
@@ -694,7 +694,7 @@ export function BookingFlow({
                   value={contact.email}
                   onChange={(e) => setContactLocal({ ...contact, email: e.target.value })}
                   placeholder="email@contoh.com"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
             </div>

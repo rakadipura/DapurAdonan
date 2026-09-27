@@ -213,7 +213,7 @@ export function OrderForm({
                   value={contact.name}
                   onChange={(e) => setContactLocal({ ...contact, name: e.target.value })}
                   placeholder="Nama Anda"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
               <div>
@@ -223,7 +223,7 @@ export function OrderForm({
                   value={contact.phone}
                   onChange={(e) => setContactLocal({ ...contact, phone: e.target.value })}
                   placeholder="081234567890"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
               <div>
@@ -233,7 +233,7 @@ export function OrderForm({
                   value={contact.email}
                   onChange={(e) => setContactLocal({ ...contact, email: e.target.value })}
                   placeholder="email@contoh.com"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
             </div>
@@ -278,7 +278,7 @@ export function OrderForm({
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
                   min={new Date().toISOString().slice(0, 10)}
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
               <div>
@@ -286,7 +286,7 @@ export function OrderForm({
                 <select
                   value={pickupWindow}
                   onChange={(e) => setPickupWindow(e.target.value)}
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 >
                   <option value="">Pilih jadwal</option>
                   {availableWindows.map((w) => (
@@ -309,7 +309,7 @@ export function OrderForm({
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                   rows={3}
                   placeholder="Alamat lengkap, termasuk kelurahan/kecamatan"
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
               </div>
               <div>
@@ -317,7 +317,7 @@ export function OrderForm({
                 <select
                   value={deliveryZone}
                   onChange={(e) => setDeliveryZone(e.target.value)}
-                  className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                  className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 >
                   <option value="">Pilih zona</option>
                   {settings.deliveryZones.map((z) => (
@@ -384,7 +384,7 @@ export function OrderForm({
                     setUploadingProof(false);
                   }
                 }}
-                className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+                className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
               />
               {uploadingProof && (
                 <p className="mt-1 text-xs text-[#5a4a3a]">Mengunggah…</p>
@@ -417,7 +417,7 @@ export function OrderForm({
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
               placeholder="Contoh: tidak pakai kopi, tambah gula, dll."
-              className="w-full rounded-lg border border-[#e6c98a] bg-[#fffaf0] px-3 py-2 text-sm focus:border-[#A0522D] focus:ring-1 focus:ring-[#A0522D]"
+              className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
             />
           </div>
 

@@ -281,7 +281,7 @@ export function CategoriesPanel() {
                 <Input id="sortOrder" type="number" min="0" value={formData.sortOrder} onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })} />
               </div>
               <div className="flex items-center gap-2 mt-6">
-                <input type="checkbox" id="isVisible" checked={formData.isVisible} onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })} className="rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]" />
+                <input type="checkbox" id="isVisible" checked={formData.isVisible} onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })} className="rounded border-brand-border-primary text-brand-primary focus-ring-inset" />
                 <Label htmlFor="isVisible" className="cursor-pointer">Tampil ke pelanggan</Label>
               </div>
             </div>

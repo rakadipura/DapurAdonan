@@ -457,12 +457,12 @@ useEffect(() => {
             </div>
 
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="isAvailable" checked={formData.isAvailable} onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })} className="rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]" />
+              <input type="checkbox" id="isAvailable" checked={formData.isAvailable} onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })} className="rounded border-brand-border-primary text-brand-primary focus-ring-inset" />
               <Label htmlFor="isAvailable" className="cursor-pointer">Tersedia</Label>
             </div>
 
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="isCustomCake" checked={formData.isCustomCake} onChange={(e) => setFormData({ ...formData, isCustomCake: e.target.checked })} className="rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]" />
+              <input type="checkbox" id="isCustomCake" checked={formData.isCustomCake} onChange={(e) => setFormData({ ...formData, isCustomCake: e.target.checked })} className="rounded border-brand-border-primary text-brand-primary focus-ring-inset" />
               <Label htmlFor="isCustomCake" className="cursor-pointer">Custom Cake (butuh lead time)</Label>
             </div>
 
@@ -471,7 +471,7 @@ useEffect(() => {
               <div className="flex flex-wrap gap-2">
                 {ALLERGEN_OPTIONS.map((a) => (
                   <Label key={a} className="cursor-pointer inline-flex items-center gap-1 rounded border border-[#e6c98a] bg-white px-2 py-1 text-sm text-[#6b4a2b] hover:border-[#A0522D]">
-                    <input type="checkbox" checked={formData.allergens.includes(a)} onChange={() => toggleAllergen(a)} className="rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]" />
+                    <input type="checkbox" checked={formData.allergens.includes(a)} onChange={() => toggleAllergen(a)} className="rounded border-brand-border-primary text-brand-primary focus-ring-inset" />
                     {a}
                   </Label>
                 ))}
@@ -483,7 +483,7 @@ useEffect(() => {
               <div className="flex flex-wrap gap-2">
                 {TAG_OPTIONS.map((t) => (
                   <Label key={t} className="cursor-pointer inline-flex items-center gap-1 rounded border border-[#e6c98a] bg-white px-2 py-1 text-sm text-[#6b4a2b] hover:border-[#A0522D]">
-                    <input type="checkbox" checked={formData.tags.includes(t)} onChange={() => toggleTag(t)} className="rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]" />
+                    <input type="checkbox" checked={formData.tags.includes(t)} onChange={() => toggleTag(t)} className="rounded border-brand-border-primary text-brand-primary focus-ring-inset" />
                     {t}
                   </Label>
                 ))}
@@ -512,7 +512,7 @@ useEffect(() => {
                       } else {
                         updateVariant(i, "isDefault", false);
                       }
-                    }} className="rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]" />
+                    }} className="rounded border-brand-border-primary text-brand-primary focus-ring-inset" />
                     Default
                   </Label>
                   <Button type="button" variant="ghost" size="icon-xs" onClick={() => removeVariant(i)} className="text-red-600">
@@ -536,7 +536,7 @@ useEffect(() => {
                   <Input type="number" placeholder="Harga" min="0" value={addOn.price} onChange={(e) => updateAddOn(i, "price", parseInt(e.target.value) || 0)} className="w-28" step="100" />
                   <Input type="number" placeholder="Urutan" value={addOn.sortOrder} onChange={(e) => updateAddOn(i, "sortOrder", parseInt(e.target.value) || 0)} className="w-20" />
                   <Label className="flex items-center gap-1 cursor-pointer text-sm">
-                    <input type="checkbox" checked={addOn.isRequired} onChange={(e) => updateAddOn(i, "isRequired", e.target.checked)} className="rounded border-[#e6c98a] text-[#A0522D] focus:ring-[#A0522D]" />
+                    <input type="checkbox" checked={addOn.isRequired} onChange={(e) => updateAddOn(i, "isRequired", e.target.checked)} className="rounded border-brand-border-primary text-brand-primary focus-ring-inset" />
                     Wajib
                   </Label>
                   <Button type="button" variant="ghost" size="icon-xs" onClick={() => removeAddOn(i)} className="text-red-600">
