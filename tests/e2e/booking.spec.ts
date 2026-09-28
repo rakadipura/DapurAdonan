@@ -302,7 +302,7 @@ test.describe('Booking Flow - E2E', () => {
     await page.waitForURL(/\/booking\/success\?code=.+/, { timeout: 10000 });
     
     // Success page should show booking code
-    await expect(page.locator('text=Booking Anda berhasil!')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Booking Anda berhasil!' })).toBeVisible();
     await expect(page.locator('text=Kode Referensi')).toBeVisible();
     
     // Should have WhatsApp link
