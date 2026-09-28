@@ -26,21 +26,29 @@ function getIdGenerator(): () => string {
 export const productionAdapter: BookingIntakeAdapter = {
   prisma: {
     bookingSlot: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       findUnique: (args: { where: { id: number } }) => getPrisma().bookingSlot.findUnique(args as any),
     },
     booking: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => getPrisma().booking.create(args as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       update: (args: { where: { code: string }; data: Record<string, unknown>; include?: Record<string, unknown> }) => getPrisma().booking.update(args as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       findMany: (args: { where: Record<string, unknown>; select: Record<string, unknown> }) => getPrisma().booking.findMany(args as any),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       findUnique: (args: { where: { code: string }; include?: Record<string, unknown> }) => getPrisma().booking.findUnique(args as any),
     },
     product: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       findMany: (args: { where: { id: { in: number[] } }; select: Record<string, unknown> }) => getPrisma().product.findMany(args as any),
     },
     order: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => getPrisma().order.create(args as any),
     },
     orderItem: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       groupBy: (args: Record<string, unknown>) => getPrisma().orderItem.groupBy(args as any),
     },
     $queryRaw: (query: TemplateStringsArray, ...args: unknown[]) => getPrisma().$queryRaw(query, ...args),
