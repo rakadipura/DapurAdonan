@@ -129,7 +129,7 @@ export default async function MenuPage() {
         </section>
 
         {/* Order form */}
-        <section className="bg-[#fffaf0] px-4 pb-16 pt-8 sm:px-6 sm:pt-12 max-sm:pb-20">
+        <section className="bg-[#fffaf0] px-4 pb-16 pt-8 sm:px-6 sm:pt-12 max-sm:pb-32">
           <div className="mx-auto max-w-3xl">
             <OrderForm
               products={productsWithPrice}
