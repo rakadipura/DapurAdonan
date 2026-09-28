@@ -121,19 +121,8 @@ jobs:
           npx prisma db push --accept-data-loss
           npm run db:ci:setup
 
-      - name: Build
-        run: npm run build
-
-      - name: Start Dev Server
-        run: npm run dev &
-        env:
-          PORT: 3000
-          DATABASE_URL: postgresql://test:test@localhost:5432/toko_mini_moni_test?schema=public
-
-      - name: Wait for Server
-        run: sleep 15 && curl -f http://localhost:3000
-
       - name: Run E2E Tests
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/toko_mini_moni_test?schema=public
+          CI: true
         run: npm run test:e2e
