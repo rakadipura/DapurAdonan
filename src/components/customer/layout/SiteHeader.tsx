@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MenuIcon, XIcon } from "lucide-react";
+import { MiniCart } from "@/components/customer/order/MiniCart";
 
 /**
  * Mobile = viewport below the sm breakpoint (640px).
@@ -87,8 +88,9 @@ export function SiteHeader({ storeName, logoUrl }: SiteHeaderProps) {
         {!isMobile && (
         <nav
           aria-label="Navigasi utama"
-          className="flex flex-wrap items-center justify-end gap-y-1 text-sm font-medium text-[#6b4a2b] max-sm:hidden"
+          className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm font-medium text-[#6b4a2b] max-sm:hidden"
         >
+          <MiniCart />
           {NAV_ITEMS.map((item, index) =>
             index === 0 ? (
               <Link

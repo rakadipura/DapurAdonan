@@ -1,6 +1,8 @@
 import { getCustomerFacingSettings } from "@/lib/settings";
 import { SiteHeader } from "@/components/customer/layout/SiteHeader";
 import { SiteFooter } from "@/components/customer/layout/SiteFooter";
+import { FloatingCartFAB } from "@/components/customer/order/FloatingCartFAB";
+import { StickyCheckoutBar } from "@/components/customer/order/StickyCheckoutBar";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <SiteHeader storeName={settings.storeName} logoUrl={settings.logoUrl} />
       <div className="flex-1">{children}</div>
       <SiteFooter storeName={settings.storeName} wide />
+      <FloatingCartFAB />
+      <StickyCheckoutBar />
     </div>
   );
 }
