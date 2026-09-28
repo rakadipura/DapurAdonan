@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cancelBooking } from "@/lib/bookings";
+import { BookingIntake, productionAdapter } from "@/lib/booking-intake";
+import { BookingIntakeError } from "@/lib/booking-intake/types";
+
+const bookingIntake = new BookingIntake(productionAdapter);
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,14 +13,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Kode dan nomor telepon wajib diisi" }, { status: 400 });
     }
 
-    const booking = await cancelBooking(code, phone, reason);
-    if (!booking) {
-      return NextResponse.json({ error: "Booking tidak ditemukan atau nomor telepon tidak cocok" }, { status: 404 });
-    }
-
-    return NextResponse.json({ booking, message: "Booking berhasil dibatalkan" }, { status: 200 });
+    const result = await bookingIntake.cancel({ code, phone, reason });
+    return NextResponse.json({ booking: result, message: "Booking berhasil dibatalkan" }, { status: 200 });
   } catch (error) {
     console.error("POST /api/bookings/cancel failed:", error);
+    if (error instanceof BookingIntakeError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     const message = error instanceof Error ? error.message : "Gagal membatalkan booking";
     return NextResponse.json({ error: message }, { status: 400 });
   }

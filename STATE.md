@@ -86,7 +86,7 @@ Ran `/improve-codebase-architecture` → generated HTML report at `/tmp/architec
 | # | Candidate | Strength | Category | Status |
 |---|-----------|----------|----------|--------|
 | 1 | **Collapse Order Intake Pipeline** | **Strong** | ports & adapters | ✅ **Done** |
-| 2 | **Collapse Booking Intake Pipeline** | **Strong** | ports & adapters | Next |
+| 2 | **Collapse Booking Intake Pipeline** | **Strong** | ports & adapters | ✅ **Done** |
 | 3 | **Deepen Admin Order/Booking Panels** | Worth exploring | local-substitutable | — |
 | 4 | **Consolidate Settings Access** | Worth exploring | local-substitutable | — |
 | 5 | **Extract WIB Date Helpers → Time Module** | Worth exploring | local-substitutable | — |
@@ -104,6 +104,19 @@ Ran `/improve-codebase-architecture` → generated HTML report at `/tmp/architec
 - HTTP handler (`/api/orders/route.ts`) now thin adapter (~60 lines)
 - All checks pass: `type-check ✓`, `lint ✓`, `test ✓`
 
+### Candidate 2 — Booking Intake Pipeline: **Completed**
+- Created `src/lib/booking-intake/` module with `BookingIntake` class
+- Single interface: `accept(input) → BookingWithMenuResult`, `reschedule(input)`, `cancel(input)`, `updateStatus(input)`
+- All deps injected via adapter (Prisma, Settings, Contact, ID generator, clock)
+- Private methods: `#validateItems`, `#validateMenuItems`, `#calculatePricing`, `#ensureSlotCapacity`, `#lockSlot`, `#lockProducts`, `#recheckStockUnderLock`
+- Slot capacity locking with `FOR UPDATE` (both old/new slots on reschedule)
+- Stock re-check under lock for menu items
+- ADR-003 compliance: reschedule creates new row + audit trail (`rescheduledFromId`, `rescheduledAt`)
+- Typed errors (`BookingIntakeError` with 15 codes)
+- In-memory test adapter with deterministic IDs & fixed clock
+- HTTP handlers (`/api/bookings/route.ts`, `/cancel`, `/reschedule`, admin `/status`) now thin adapters (~60-80 lines each)
+- All checks pass: `type-check ✓`, `lint ✓`, `unit tests ✓` (48), `e2e tests ✓` (63)
+
 ---
 
 ## Remaining Work (from TODO.md)
@@ -112,7 +125,7 @@ Ran `/improve-codebase-architecture` → generated HTML report at `/tmp/architec
 - [ ] **Migrate legacy booking/pickup dates** — rows before off-by-one fix are stored one day early
 - [ ] **Make date display fully TZ-independent** — `formatDateLong` uses local time
 - [x] **Run E2E tests** against seeded DB, fix failures — **All 63 tests passing**
-- [ ] Enable `e2e-tests` job in CI (uncomment in `.github/workflows/ci.yml`)
+- [x] Enable `e2e-tests` job in CI — **Configured with PostgreSQL service, Playwright browsers**
 
 ### Medium Priority
 - [ ] Rate-limit `/api/admin/login`
@@ -136,20 +149,20 @@ Ran `/improve-codebase-architecture` → generated HTML report at `/tmp/architec
 ### 1. ~~Deepen Order Intake~~ ✅ **Done**
 Created `src/lib/order-intake/` module. HTTP handler now delegates to `orderIntake.accept()`.
 
-### 2. Deepen Booking Intake (Next Highest Leverage)
-```
-/grilling "Collapse Booking Intake Pipeline"
-```
-Same pattern as Order Intake: `BookingIntake` class with `accept()`, `reschedule()`, `cancel()`, in-memory test adapter.
+### 2. ~~Deepen Booking Intake~~ ✅ **Done**
+Created `src/lib/booking-intake/` module with `accept()`, `reschedule()`, `cancel()`, `updateStatus()`. All mutation HTTP handlers migrated.
 
 ### 3. Run E2E Tests ✅ **Done**
-All 63 tests passing (desktop + mobile). Next: uncomment `e2e-tests` job in `.github/workflows/ci.yml` and add DB setup steps.
+All 63 tests passing (desktop + mobile). E2E job enabled in CI with PostgreSQL service.
 
 ### 4. Migrate Legacy Dates
 Write a one-time migration script for booking/order rows stored with off-by-one error.
 
 ### 5. Extract Time Module (Candidate 5)
 Low-risk, high-value: separates WIB date logic from settings, makes ADR-0001 explicit, improves testability.
+
+### 6. Deepen Admin Panels (Candidate 3)
+Extract common patterns from `ProductsPanel`, `OrdersPanel`, `BookingsPanel` into reusable components.
 
 ---
 

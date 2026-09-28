@@ -161,6 +161,59 @@ export function createTestAdapter(overrides: {
           };
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        update: async ({ where, data, include }: any) => {
+          const idx = bookings.findIndex((b) => b.code === where.code);
+          if (idx === -1) throw new Error("Booking not found");
+          bookings[idx] = { ...bookings[idx], ...data, updatedAt: new Date() };
+          const slot = slots.get(bookings[idx].slotId)!;
+          return {
+            id: bookings[idx].id,
+            code: bookings[idx].code,
+            date: bookings[idx].date,
+            slotId: bookings[idx].slotId,
+            partySize: bookings[idx].partySize,
+            name: bookings[idx].name,
+            phone: bookings[idx].phone,
+            email: bookings[idx].email,
+            status: bookings[idx].status,
+            cancelledAt: bookings[idx].cancelledAt,
+            cancelReason: bookings[idx].cancelReason,
+            rescheduledFromId: bookings[idx].rescheduledFromId,
+            rescheduledAt: bookings[idx].rescheduledAt,
+            createdAt: bookings[idx].createdAt,
+            updatedAt: bookings[idx].updatedAt,
+            noShowAt: bookings[idx].noShowAt,
+            slot: include?.slot?.select
+              ? { id: slot.id, name: slot.name, startTime: slot.startTime, endTime: slot.endTime }
+              : undefined,
+          };
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        findUnique: async ({ where }: any) => {
+          const booking = bookings.find((b) => b.code === where.code);
+          if (!booking) return null;
+          const slot = slots.get(booking.slotId);
+          return {
+            id: booking.id,
+            code: booking.code,
+            date: booking.date,
+            slotId: booking.slotId,
+            partySize: booking.partySize,
+            name: booking.name,
+            phone: booking.phone,
+            email: booking.email,
+            status: booking.status,
+            cancelledAt: booking.cancelledAt,
+            cancelReason: booking.cancelReason,
+            rescheduledFromId: booking.rescheduledFromId,
+            rescheduledAt: booking.rescheduledAt,
+            createdAt: booking.createdAt,
+            updatedAt: booking.updatedAt,
+            noShowAt: booking.noShowAt,
+            slot: slot ? { id: slot.id, name: slot.name, startTime: slot.startTime, endTime: slot.endTime } : undefined,
+          };
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         findMany: async ({ where, select }: any) => {
           let result = [...bookings];
 

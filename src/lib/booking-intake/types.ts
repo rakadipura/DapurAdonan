@@ -46,7 +46,9 @@ export interface PrismaLike {
   };
   booking: {
     create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;
+    update: (args: { where: { code: string }; data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;
     findMany: (args: { where: Record<string, unknown>; select: Record<string, unknown> }) => Promise<Record<string, unknown>[]>;
+    findUnique: (args: { where: { code: string }; include?: Record<string, unknown> }) => Promise<unknown>;
   };
   product: {
     findMany: (args: { where: { id: { in: number[] } }; select: Record<string, unknown> }) => Promise<unknown[]>;
@@ -79,6 +81,7 @@ export interface TransactionLike {
   };
   booking: {
     create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;
+    update: (args: { where: { code: string }; data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;
   };
   order: {
     create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => Promise<unknown>;

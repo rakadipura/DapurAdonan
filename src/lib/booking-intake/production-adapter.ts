@@ -33,7 +33,11 @@ export const productionAdapter: BookingIntakeAdapter = {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       create: (args: any) => getPrisma().booking.create(args),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      update: (args: any) => getPrisma().booking.update(args),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       findMany: (args: any) => getPrisma().booking.findMany(args),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      findUnique: (args: any) => getPrisma().booking.findUnique(args),
     },
     product: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

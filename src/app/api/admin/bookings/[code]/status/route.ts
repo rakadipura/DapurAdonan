@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { updateBookingStatus, BOOKING_STATUSES } from "@/lib/bookings";
+import { BookingIntake, productionAdapter } from "@/lib/booking-intake";
+import { BookingIntakeError } from "@/lib/booking-intake/types";
 import { isAdminAuthenticated, adminUnauthorized } from "@/lib/admin-auth";
 
 const schema = z.object({
-  status: z.enum(BOOKING_STATUSES as [string, ...string[]]),
+  status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "RESCHEDULED", "NO_SHOW", "COMPLETED"]),
 });
+
+const bookingIntake = new BookingIntake(productionAdapter);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   if (!(await isAdminAuthenticated())) return adminUnauthorized();
@@ -23,13 +26,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cod
   }
 
   try {
-    const booking = await updateBookingStatus(code, parsed.data.status as (typeof BOOKING_STATUSES)[number]);
-    if (!booking) {
-      return NextResponse.json({ error: "Booking tidak ditemukan" }, { status: 404 });
-    }
+    const booking = await bookingIntake.updateStatus({ code, status: parsed.data.status });
     return NextResponse.json({ booking });
   } catch (error) {
     console.error("POST /api/admin/bookings/[code]/status failed:", error);
+    if (error instanceof BookingIntakeError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     const message = error instanceof Error ? error.message : "Gagal memperbarui status";
     return NextResponse.json({ error: message }, { status: 400 });
   }
