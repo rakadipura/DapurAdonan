@@ -247,7 +247,8 @@ export class OrderIntake {
   async #lockProducts(tx: TransactionLike, productIds: number[]): Promise<void> {
     if (productIds.length > 0) {
       const sortedIds = [...productIds].sort((a, b) => a - b);
-      await tx.$queryRaw`SELECT id FROM "Product" WHERE id IN (${sortedIds.join(",")}) FOR UPDATE`;
+      const placeholders = sortedIds.map((_, i) => `$${i + 1}`).join(", ");
+      await tx.$queryRawUnsafe(`SELECT id FROM "Product" WHERE id IN (${placeholders}) FOR UPDATE`, ...sortedIds);
     }
   }
 

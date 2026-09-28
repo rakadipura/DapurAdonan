@@ -114,6 +114,7 @@ export function createTestAdapter(overrides: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         findUnique: async ({ where: { id } }: any) => slots.get(id) ?? null,
       },
+      $queryRawUnsafe: async () => {},
       booking: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         create: async ({ data, include }: any) => {
@@ -390,9 +391,10 @@ export function createTestAdapter(overrides: {
     },
     clock: () => fixedClock,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    $transaction: async <T>(fn: (tx: any) => Promise<T>) => {
+$transaction: async <T>(fn: (tx: any) => Promise<T>) => {
       return fn({
         $queryRaw: async () => {},
+        $queryRawUnsafe: async () => {},
         orderItem: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           groupBy: async ({ where }: any) => {

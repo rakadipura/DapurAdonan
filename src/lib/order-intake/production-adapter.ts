@@ -22,6 +22,7 @@ export function createProductionAdapter(): OrderIntakeAdapter {
       return prisma.$transaction(async (prismaTx: unknown) => {
         const tx = createTxAdapter(prismaTx as {
           $queryRaw: (query: TemplateStringsArray, ...args: unknown[]) => Promise<unknown>;
+          $queryRawUnsafe: (query: string, ...args: unknown[]) => Promise<unknown>;
           orderItem: { groupBy: (args: Record<string, unknown>) => Promise<{ _sum: { qty: number | null } }[]> };
           order: { create: (args: { data: Record<string, unknown>; include: Record<string, unknown> }) => Promise<OrderWithItems> };
         });
@@ -33,11 +34,13 @@ export function createProductionAdapter(): OrderIntakeAdapter {
 
 function createTxAdapter(prismaTx: {
   $queryRaw: (query: TemplateStringsArray, ...args: unknown[]) => Promise<unknown>;
+  $queryRawUnsafe: (query: string, ...args: unknown[]) => Promise<unknown>;
   orderItem: { groupBy: (args: Record<string, unknown>) => Promise<{ _sum: { qty: number | null } }[]> };
   order: { create: (args: { data: Record<string, unknown>; include: Record<string, unknown> }) => Promise<OrderWithItems> };
 }): TransactionLike {
   return {
     $queryRaw: async (query: TemplateStringsArray, ...args: unknown[]) => prismaTx.$queryRaw(query, ...args),
+    $queryRawUnsafe: async (query: string, ...args: unknown[]) => prismaTx.$queryRawUnsafe(query, ...args),
     orderItem: {
       groupBy: async (args: Record<string, unknown>) =>
         prismaTx.orderItem.groupBy(args as Parameters<typeof prismaTx.orderItem.groupBy>[0]) as unknown as Promise<{ _sum: { qty: number | null } }[]>,
@@ -66,6 +69,7 @@ function createPrismaAdapter() {
         prisma.orderItem.groupBy(args as Parameters<typeof prisma.orderItem.groupBy>[0]) as unknown as Promise<{ _sum: { qty: number | null } }[]>,
     },
     $queryRaw: async (query: TemplateStringsArray, ...args: unknown[]) => prisma.$queryRaw(query, ...args),
+    $queryRawUnsafe: async (query: string, ...args: unknown[]) => prisma.$queryRawUnsafe(query, ...args),
   };
 }
 

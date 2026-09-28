@@ -24,6 +24,7 @@ export interface PrismaLike {
     groupBy: (args: Record<string, unknown>) => Promise<{ _sum: { qty: number | null } }[]>;
   };
   $queryRaw: (query: TemplateStringsArray, ...args: unknown[]) => Promise<unknown>;
+  $queryRawUnsafe: (query: string, ...args: unknown[]) => Promise<unknown>;
 }
 
 export interface ProductData {
@@ -48,6 +49,7 @@ export interface StockCheckWhere {
 
 export interface TransactionLike {
   $queryRaw: (query: TemplateStringsArray, ...args: unknown[]) => Promise<unknown>;
+  $queryRawUnsafe: (query: string, ...args: unknown[]) => Promise<unknown>;
   orderItem: {
     groupBy: (args: Record<string, unknown>) => Promise<{ _sum: { qty: number | null } }[]>;
   };

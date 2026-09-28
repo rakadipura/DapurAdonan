@@ -43,6 +43,7 @@ export function createTestAdapter(overrides: Partial<{
   function createTxAdapter(): TransactionLike {
     return {
       $queryRaw: async () => {},
+      $queryRawUnsafe: async () => {},
       orderItem: {
         groupBy: async (args: Record<string, unknown>) => {
           const where = (args as { where: StockCheckWhere }).where;
@@ -154,6 +155,7 @@ export function createTestAdapter(overrides: Partial<{
       return fn(tx);
     },
     $queryRaw: async () => {},
+    $queryRawUnsafe: async () => {},
   };
 
   return {

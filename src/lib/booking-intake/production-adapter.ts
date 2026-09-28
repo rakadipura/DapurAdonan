@@ -53,6 +53,7 @@ export const productionAdapter: BookingIntakeAdapter = {
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     $queryRaw: (query: any, ...args: any[]) => getPrisma().$queryRaw(query, ...args),
+    $queryRawUnsafe: (query: any, ...args: any[]) => getPrisma().$queryRawUnsafe(query, ...args),
   },
   settings: {
     getBookingLeadHours: () => getBookingLeadHours(),
