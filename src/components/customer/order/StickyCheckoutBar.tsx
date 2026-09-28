@@ -30,7 +30,7 @@ export function StickyCheckoutBar() {
             className="flex-shrink-0 w-full sm:w-auto rounded-lg bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white text-center transition hover:bg-brand-primary-hover active:scale-[0.98]"
           >
             <span className="hidden sm:inline">Checkout · </span>
-            <span className="inline sm:hidden">Checkout</span>
+            <span className="inline sm:hidden">Checkout · </span>
             {formatRupiah(totalAmount)}
           </Link>
         </div>
