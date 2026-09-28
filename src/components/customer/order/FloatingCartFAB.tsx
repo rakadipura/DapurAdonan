@@ -13,8 +13,6 @@ export function FloatingCartFAB() {
   const totalAmount = state.cart.reduce((sum, item) => sum + (item.price + (item.addOnsPrice || 0)) * item.qty, 0);
   const itemCount = state.cart.reduce((sum, item) => sum + item.qty, 0);
 
-  if (cart.length === 0) return null;
-
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -26,6 +24,8 @@ export function FloatingCartFAB() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  if (cart.length === 0) return null;
 
   return (
     <div className="floating-cart-container fixed bottom-6 right-4 z-40 sm:hidden">
