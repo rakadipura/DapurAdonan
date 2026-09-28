@@ -14,10 +14,13 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // Normalize phone to 08 format for database lookup
+  const normalizedPhone = phone.startsWith("62") ? "0" + phone.slice(2) : phone;
+
   try {
     const orders = await prisma.order.findMany({
       where: {
-        customerPhone: phone,
+        customerPhone: normalizedPhone,
       },
       include: {
         itemsOrder: {
