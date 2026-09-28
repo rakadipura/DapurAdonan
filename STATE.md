@@ -111,7 +111,8 @@ Ran `/improve-codebase-architecture` → generated HTML report at `/tmp/architec
 ### High Priority
 - [ ] **Migrate legacy booking/pickup dates** — rows before off-by-one fix are stored one day early
 - [ ] **Make date display fully TZ-independent** — `formatDateLong` uses local time
-- [ ] **Run E2E tests** against seeded DB, fix failures, enable `e2e-tests` job in CI
+- [x] **Run E2E tests** against seeded DB, fix failures — **All 63 tests passing**
+- [ ] Enable `e2e-tests` job in CI (uncomment in `.github/workflows/ci.yml`)
 
 ### Medium Priority
 - [ ] Rate-limit `/api/admin/login`
@@ -141,12 +142,8 @@ Created `src/lib/order-intake/` module. HTTP handler now delegates to `orderInta
 ```
 Same pattern as Order Intake: `BookingIntake` class with `accept()`, `reschedule()`, `cancel()`, in-memory test adapter.
 
-### 3. Run E2E Tests
-```bash
-npm run dev          # terminal 1
-npm run test:e2e     # terminal 2
-```
-Fix failures, then uncomment `e2e-tests` job in `.github/workflows/ci.yml`
+### 3. Run E2E Tests ✅ **Done**
+All 63 tests passing (desktop + mobile). Next: uncomment `e2e-tests` job in `.github/workflows/ci.yml` and add DB setup steps.
 
 ### 4. Migrate Legacy Dates
 Write a one-time migration script for booking/order rows stored with off-by-one error.
