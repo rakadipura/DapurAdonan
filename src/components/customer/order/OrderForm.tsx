@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useSession } from "@/components/customer/SessionProvider";
 import type { Product, CustomerType, PickupWindow, DeliveryZone } from "@/types";
 import { formatRupiah } from "@/lib/money";
+import { AlertTriangleIcon } from "lucide-react";
 
 interface OrderFormProps {
   products: Product[];
@@ -34,7 +35,7 @@ export function OrderForm({
 }: OrderFormProps) {
   const { state, updateCartQty, removeFromCart, clearCart, totalAmount, itemCount } = useSession();
   const [step, setStep] = useState<"cart" | "checkout">("cart");
-  const [isSubmitting, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
 
   const [contact, setContactLocal] = useState<CustomerType>({ name: "", phone: "", email: "" });
@@ -51,14 +52,30 @@ export function OrderForm({
 
   const availableWindows = settings.pickupWindows;
 
+  // Calculate minimum pickup date based on max lead time in cart
+  const maxLeadTime = state.cart.reduce((max, item) => {
+    const product = products.find((p) => p.id === item.productId);
+    return Math.max(max, product?.leadTimeDays ?? 0);
+  }, 0);
+
+  // Calculate minimum pickup date (today + max lead time in WIB)
+  const todayWIB = new Date();
+  todayWIB.setHours(todayWIB.getHours() + 7); // Convert to WIB
+  const minPickupDate = new Date(todayWIB);
+  minPickupDate.setDate(minPickupDate.getDate() + maxLeadTime);
+  const minPickupDateStr = minPickupDate.toISOString().slice(0, 10);
+
   const hasCustomCake = state.cart.some((item) => {
     const product = products.find((p) => p.id === item.productId);
     return product?.isCustomCake;
   });
 
+  // Check if selected pickup date violates lead time
+  const isPickupDateTooEarly = orderType === "PICKUP" && pickupDate && pickupDate < minPickupDateStr;
+
   const handlePlaceOrder = useCallback(() => {
     setOrderError(null);
-    startTransition(async () => {
+    (async () => {
       try {
         const payload = {
           items: state.cart.map((c) => ({
@@ -105,8 +122,10 @@ export function OrderForm({
       } catch (err) {
         console.error("Order error:", err);
         setOrderError("Terjadi kesalahan jaringan. Periksa koneksi dan coba lagi.");
+      } finally {
+        setIsSubmitting(false);
       }
-    });
+    })();
     }, [state.cart, contact, orderType, pickupDate, pickupWindow, deliveryAddress, deliveryZone, paymentMethod, paymentProofUrl, notes, clearCart, products, hasCustomCake]);
 
   return (
@@ -277,9 +296,21 @@ export function OrderForm({
                   type="date"
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
-                  min={new Date().toISOString().slice(0, 10)}
+                  min={minPickupDateStr}
                   className="w-full rounded-lg border border-brand-border-primary bg-brand-bg-form px-3 py-2 text-sm focus-ring-sm"
                 />
+                {maxLeadTime > 0 && (
+                  <p className="mt-1 text-xs text-amber-600 flex items-center gap-1">
+                    <AlertTriangleIcon className="h-3 w-3" />
+                    Pesanan minimal {maxLeadTime} hari sebelumnya (tercepat: {new Date(minPickupDateStr).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })})
+                  </p>
+                )}
+                {isPickupDateTooEarly && (
+                  <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                    <AlertTriangleIcon className="h-3 w-3" />
+                    Tanggal terlalu dekat. Pilih tanggal minimal {new Date(minPickupDateStr).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-[#5a4a3a]">Jam pengambilan</label>
@@ -434,7 +465,7 @@ export function OrderForm({
               isSubmitting ||
               contact.name === "" ||
               contact.phone === "" ||
-              (orderType === "PICKUP" && (!pickupDate || !pickupWindow)) ||
+              (orderType === "PICKUP" && (!pickupDate || !pickupWindow || isPickupDateTooEarly)) ||
               (orderType === "DELIVERY" && (!deliveryAddress || !deliveryZone))
             }
             className="w-full rounded-lg border-0 bg-[#A0522D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8b4513] disabled:cursor-not-allowed disabled:bg-[#d9b38c]"
