@@ -26,34 +26,25 @@ function getIdGenerator(): () => string {
 export const productionAdapter: BookingIntakeAdapter = {
   prisma: {
     bookingSlot: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      findUnique: (args: any) => getPrisma().bookingSlot.findUnique(args),
+      findUnique: (args: { where: { id: number } }) => getPrisma().bookingSlot.findUnique(args as any),
     },
     booking: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      create: (args: any) => getPrisma().booking.create(args),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      update: (args: any) => getPrisma().booking.update(args),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      findMany: (args: any) => getPrisma().booking.findMany(args),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      findUnique: (args: any) => getPrisma().booking.findUnique(args),
+      create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => getPrisma().booking.create(args as any),
+      update: (args: { where: { code: string }; data: Record<string, unknown>; include?: Record<string, unknown> }) => getPrisma().booking.update(args as any),
+      findMany: (args: { where: Record<string, unknown>; select: Record<string, unknown> }) => getPrisma().booking.findMany(args as any),
+      findUnique: (args: { where: { code: string }; include?: Record<string, unknown> }) => getPrisma().booking.findUnique(args as any),
     },
     product: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      findMany: (args: any) => getPrisma().product.findMany(args),
+      findMany: (args: { where: { id: { in: number[] } }; select: Record<string, unknown> }) => getPrisma().product.findMany(args as any),
     },
     order: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      create: (args: any) => getPrisma().order.create(args),
+      create: (args: { data: Record<string, unknown>; include?: Record<string, unknown> }) => getPrisma().order.create(args as any),
     },
     orderItem: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      groupBy: (args: any) => getPrisma().orderItem.groupBy(args),
+      groupBy: (args: Record<string, unknown>) => getPrisma().orderItem.groupBy(args as any),
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    $queryRaw: (query: any, ...args: any[]) => getPrisma().$queryRaw(query, ...args),
-    $queryRawUnsafe: (query: any, ...args: any[]) => getPrisma().$queryRawUnsafe(query, ...args),
+    $queryRaw: (query: TemplateStringsArray, ...args: unknown[]) => getPrisma().$queryRaw(query, ...args),
+    $queryRawUnsafe: (query: string, ...args: unknown[]) => getPrisma().$queryRawUnsafe(query, ...args),
   },
   settings: {
     getBookingLeadHours: () => getBookingLeadHours(),
